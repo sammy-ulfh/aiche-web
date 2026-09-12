@@ -1,0 +1,128 @@
+---
+/**
+ * LazyVideo — `<video>` que NO descarga nada hasta entrar al viewport.
+ *
+ * Comportamiento exigido por RULES §11.2:
+ *  1. Sin `src` en el HTML inicial. Las URLs van en `data-src` /
+ *     `data-src-webm` y las inyecta el JS al intersectar el viewport.
+ *  2. `muted playsinline loop preload="none"` + dimensiones.
+ *  2b. El póster **no** va en el atributo `poster`: el navegador lo
+ *     descarga siempre, aunque el video esté fuera de pantalla y aunque
+ *     `preload="none"`. Medido en F7: la home se traía 113 KB de pósters
+ *     por debajo del pliegue (`about-poster.jpg` 70 KB + `chem-e-car.jpg`
+ *     43 KB) antes de pintar nada. Va como `<img loading="lazy">` en una
+ *     capa por debajo del `<video>`, que sí respeta el viewport y que sin
+ *     JS sigue mostrando la imagen igual (ADENDA §A2). D-163.
+ *  3. IntersectionObserver compartido (threshold 0.25, rootMargin 200px).
+ *  4. Pausa al salir del viewport.
+ *  5. Pausa con `visibilitychange` si la pestaña se oculta.
+ *  6. `prefers-reduced-motion: reduce` → sin autoplay: poster + botón
+ *     de play accesible (lo inyecta el JS).
+ *  7. `navigator.connection.saveData === true` o `effectiveType` 2g
+ *     → sin autoplay: poster + botón.
+ *  8. Si `play()` es rechazada, muestra el botón.
+ *  9. Botón de play con `aria-label` en español.
+ *
+ * El script vive en `src/scripts/lazy-video.ts` y se importa una sola
+ * vez (RULES §3.5).
+ */
+import Img from './Img.astro';
+import type { VideoAsset } from '../../data/media';
+
+interface Props {
+    asset: VideoAsset;
+    /** Si el asset es puramente decorativo. */
+    decorative?: boolean;
+    /** Forzar autoplay aunque haya reduced-motion (solo para QA). */
+    forceAutoplay?: boolean;
+    class?: string;
+}
+
+const { asset, decorative = false, forceAutoplay = false, class: className = '' } =
+    Astro.props;
+
+const ariaLabel = decorative ? undefined : asset.label;
+---
+
+<figure
+    class:list={['relative overflow-hidden bg-navy-900', className]}
+    style={`aspect-ratio:${asset.ratio};`}
+    data-lazy-video
+    data-force-autoplay={forceAutoplay ? 'true' : 'false'}
+>
+    {/* Capa de póster (ver §2b del encabezado). Va ANTES del `<video>`
+      * para que éste la tape en cuanto tiene fotogramas; es decorativa
+      * porque el `<video>` de al lado ya lleva el nombre accesible. */}
+    <Img
+        src={asset.poster.src}
+        decorative
+        width={asset.poster.w}
+        height={asset.poster.h}
+        loading="lazy"
+        sizes="(min-width: 80rem) 72vw, 90vw"
+        class="absolute inset-0 h-full w-full object-cover"
+    />
+
+    <video
+        data-lazy-video-el
+        muted
+        playsinline
+        loop
+        preload="none"
+        width={asset.w}
+        height={asset.h}
+        aria-label={ariaLabel}
+        aria-hidden={decorative ? 'true' : undefined}
+        class="absolute inset-0 h-full w-full object-cover"
+    ></video>
+
+    {/*
+      * Botón de play accesible (lo muestra el JS cuando hace falta).
+      *
+      * `z-10` no es decorativo: `VideoHighlight` pinta su overlay de
+      * titular y chapas como hermano POSTERIOR de este `figure`, así que
+      * sin z-index el overlay quedaba encima y **se comía tanto el hover
+      * como el clic del botón**. Con reduced-motion —donde el botón es el
+      * único camino para ver el video— eso lo dejaba inservible con
+      * ratón. Detectado midiendo el estado de hover en F6.
+      */}
+    <button
+        type="button"
+        class="absolute inset-0 z-10 flex items-center justify-center bg-black/30 text-white opacity-0 transition-[opacity,background-color] hover:bg-black/55 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+        data-lazy-video-play
+        aria-label="Reproducir video"
+        hidden
+    >
+        <span class="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white bg-navy/70">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+            >
+                <polygon points="6,4 20,12 6,20"></polygon>
+            </svg>
+        </span>
+    </button>
+
+    {/* Atributos data con las URLs (sin src → sin descarga). */}
+    <template data-lazy-video-template>
+        <source type="video/webm" data-src={asset.webm} />
+        <source type="video/mp4" data-src={asset.mp4} />
+    </template>
+</figure>
+
+{/* El script se importa desde aquí, no desde `Layout.astro`: así sólo
+ * viaja en las rutas que realmente tienen video. Astro lo deduplica si
+ * el componente aparece varias veces en la misma página.
+ *
+ * Antes se importaba desde `pages/kit.astro`, que S09 eliminó, y el
+ * módulo dejó de emitirse en todo el sitio (docs/AUDIT-F2.md §1.6).
+ *
+ * Sin JS queda la capa `<img>` del póster, así que no se pierde
+ * contenido: el video es mejora, no es el contenido (ADENDA §A2). */}
+<script>
+    import '../../scripts/lazy-video.ts';
+</script>

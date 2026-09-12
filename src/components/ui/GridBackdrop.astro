@@ -1,0 +1,125 @@
+---
+/**
+ * GridBackdrop — fondo insignia del sitio.
+ *
+ * Reproduce el fondo de las páginas navy del PDF. Ambas capas están
+ * medidas píxel a píxel en F4 sobre el PDF rasterizado a 1920×1080
+ * (páginas 10-14, que son el lenguaje visual definitivo — RULES §4):
+ *
+ *  1. **Degradado radial elíptico.** Centro en (1056, 540) sobre el
+ *     lienzo de 1920×1080 → 55 % / 50 % de la página; como el nav ocupa
+ *     los 80px superiores y este fondo vive dentro de la pantalla, el
+ *     centro cae al 46 % de su alto. Radios rx≈1037 (54 % de 1920) y
+ *     ry≈497 (50 % del alto útil de 1000px).
+ *     Paradas medidas (luma del pixel → token más cercano):
+ *       r=0     #2e86c6  navy-500      (medido #2b7fbf en x=960,y=540)
+ *       r=0.32  #1a4f8a  navy-700      (medido #1b5c96)
+ *       r=0.58  #123f72  navy          (medido #134278)
+ *       r=1     #0d2f57  navy-900      (medido #0b2e54)
+ *     Antes era un `linear-gradient(135deg, …)` diagonal inventado.
+ *
+ *  2. **Rejilla técnica** de 104px de celda sobre el mismo lienzo
+ *     (medida por los máximos locales de luminancia en las p.1 y p.13:
+ *     x = 76, 180, 284… → paso 104; fase x=76, y=95 global, es decir
+ *     y=15 dentro de la pantalla bajo el nav). 104 / 16 = 6.5 unidades base, así
+ *     que la celda escala en bloque con la pantalla igual que todo lo
+ *     demás. Antes eran 96px fijos, que no escalaban.
+ *     Líneas de 1px de blanco al 7 % (delta de luma medido: 14.8 sobre
+ *     una base de 42.9 → α ≈ 0.07). RULES §5.3 pide 6-10 %.
+ *
+ * Sigue siendo CSS puro (RULES §5.3): cero JS, cero imagen, cero SVG.
+ * Se coloca como primer hijo de una sección relativa; el contenido va
+ * encima con `relative`. Es absoluto y no captura eventos.
+ *
+ * Props:
+ *  - `intensity`: "subtle" (default, 7 %) o "bold" (11 %).
+ *  - `tone`: fondo navy radial o crema plano.
+ *  - `center`: centro radial de F4 (55 %) o centrado (50 %), medido en F5.
+ */
+interface Props {
+    intensity?: 'subtle' | 'bold';
+    tone?: 'navy' | 'cream';
+    center?: 'brand' | 'centered';
+}
+
+const {
+    intensity = 'subtle',
+    tone = 'navy',
+    center = 'brand',
+} = Astro.props;
+const opacity = intensity === 'bold' ? 0.11 : 0.07;
+const radialX = center === 'centered' ? '50%' : '55%';
+---
+
+<div
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-0 -z-10"
+    data-grid-backdrop
+    data-tone={tone}
+    style={`--grid-opacity:${opacity};--radial-x:${radialX};`}
+></div>
+
+<style>
+    [data-grid-backdrop] {
+        /* Celda de 104px sobre el lienzo de 1920 = 6.5 unidades base.
+         * Fuera de una `.screen`, `--screen-fs` no existe y cae a 16px,
+         * que devuelve exactamente los 104px del diseño. */
+        --grid-cell: calc(var(--screen-fs, 1rem) * 6.5);
+        --grid-x: calc(var(--screen-fs, 1rem) * 4.75);
+        --grid-y: calc(var(--screen-fs, 1rem) * 0.9375);
+        --grid-line: rgb(255 255 255 / var(--grid-opacity, 0.07));
+
+        background-color: var(--color-navy-900);
+        background-image:
+            linear-gradient(
+                to right,
+                var(--grid-line) 0 1px,
+                transparent 1px
+            ),
+            linear-gradient(
+                to bottom,
+                var(--grid-line) 0 1px,
+                transparent 1px
+            ),
+            radial-gradient(
+                ellipse 54% 50% at var(--radial-x, 55%) 46%,
+                var(--color-navy-500) 0%,
+                var(--color-navy-700) 32%,
+                var(--color-navy) 58%,
+                var(--color-navy-900) 100%
+            );
+        background-size:
+            var(--grid-cell) var(--grid-cell),
+            var(--grid-cell) var(--grid-cell),
+            100% 100%;
+        background-position:
+            var(--grid-x) var(--grid-y),
+            var(--grid-x) var(--grid-y),
+            0 0;
+        background-repeat: repeat, repeat, no-repeat;
+    }
+
+    [data-grid-backdrop][data-tone='cream'] {
+        --grid-line: rgb(18 63 114 / 0.12);
+
+        background-color: var(--color-cream);
+        background-image:
+            linear-gradient(
+                to right,
+                var(--grid-line) 0 1px,
+                transparent 1px
+            ),
+            linear-gradient(
+                to bottom,
+                var(--grid-line) 0 1px,
+                transparent 1px
+            );
+        background-size:
+            var(--grid-cell) var(--grid-cell),
+            var(--grid-cell) var(--grid-cell);
+        background-position:
+            var(--grid-x) var(--grid-y),
+            var(--grid-x) var(--grid-y);
+        background-repeat: repeat;
+    }
+</style>

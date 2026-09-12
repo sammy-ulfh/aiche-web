@@ -1,0 +1,36 @@
+---
+/**
+ * /participaciones — Lista completa de participaciones (RULES §8, §9.3).
+ *
+ * F5 reúne en una sola pantalla la composición de la p.7 real del PDF:
+ * tarjeta `PRÓXIMO EVENTO`, lista de competencias, título, subtítulo y
+ * segundo video lazy del sitio.
+ *
+ * Las 4 competencias salen de `src/data/competitions.ts` (RULES §6);
+ * ningún string de copy vive en este `.astro`.
+ *
+ * El h1 de la página es `participations.title` (RULES §13: un solo
+ * h1 por página).
+ */
+import Layout from '../layouts/Layout.astro';
+import ParticipationsOverview from '../components/sections/ParticipationsOverview.astro';
+import { seoRoutes } from '../data/content';
+import { eventJsonLd } from '../data/seo';
+
+const title = seoRoutes.participations.title;
+// La descripción sale de `seoRoutes`, igual que el título: es texto
+// escrito para el buscador, no el copy visible de la página. Hasta F7
+// estas tres rutas cogían el párrafo de la diapositiva y producían
+// descripciones de 288 y de 34 caracteres.
+const description = seoRoutes.participations.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    <ParticipationsOverview />
+
+    {/* JSON-LD `Event` (RULES §14) — la página menciona el evento. */}
+    <script
+        type="application/ld+json"
+        set:html={JSON.stringify(eventJsonLd)}
+        is:inline></script>
+</Layout>

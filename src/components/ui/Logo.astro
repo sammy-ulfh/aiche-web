@@ -1,0 +1,69 @@
+---
+/**
+ * Logo — isotipo hexagonal de AIChE GDL.
+ *
+ * Desde F4 pinta el **isotipo real** (`design/aiche_logo.svg`, copiado a
+ * `public/media/logo/`), no el galón geométrico que se dibujaba antes:
+ * era la desviación S-5 de `docs/AUDIT-F2.md`. El PDF define un hexágono
+ * de capas de punta hacia arriba con proporción 149×172 (0.866, la del
+ * hexágono regular), y así se mide en las p.1 (148×170) y p.9 (244×281).
+ *
+ * Se sirve como `<img>` y no en línea a propósito:
+ *  - Aparece hasta cuatro veces por página (nav, footer, hero, CTA); en
+ *    línea serían ~10 KB de SVG repetido en cada HTML.
+ *  - Sustituirlo es dejar otro archivo con el mismo nombre, sin tocar
+ *    código (regla 8 del proyecto).
+ * Es un archivo local: cero peticiones a terceros (regla 6).
+ *
+ * Primitiva de `ui/`: **no importa nada de `data/`** (ADENDA §A4). Quien
+ * lo usa le pasa el asset del manifiesto (`data/media.ts`).
+ *
+ * Props:
+ *  - `asset`: entrada del manifiesto de medios (normalmente `media.isotipo`).
+ *  - `size`: ancho en px **del lienzo de diseño 1920×1080** (default 36).
+ *    Se emite en `em`, así que dentro de una `.screen` escala en bloque
+ *    con la pantalla (ADENDA §A3) y en el chrome (Nav, Footer) equivale a
+ *    los mismos px de siempre, porque ahí la base sigue siendo 16px.
+ *  - `eager`: `true` para el isotipo del hero, que es candidato a LCP.
+ *  - `alt`: sobreescribe el alt del manifiesto. Pasar `""` cuando el
+ *    isotipo es decorativo porque el wordmark de al lado ya lo nombra
+ *    (es el caso del enlace de marca del `Nav`): así el nombre accesible
+ *    del enlace no repite «AIChE GDL» dos veces (F7).
+ */
+import type { ImageAsset } from '../../data/media';
+
+interface Props {
+    asset: ImageAsset;
+    size?: number;
+    eager?: boolean;
+    /** Sobreescribe `asset.alt`; `""` lo marca como decorativo. */
+    alt?: string;
+    class?: string;
+}
+
+const {
+    asset,
+    size = 36,
+    eager = false,
+    alt,
+    class: className = '',
+} = Astro.props;
+
+const altText = alt ?? asset.alt;
+
+// px del lienzo → em. 16 es la base del lienzo 1920×1080 (§A3).
+const emWidth = `${size / 16}em`;
+const emHeight = `${(size * asset.h) / asset.w / 16}em`;
+---
+
+<img
+    src={asset.src}
+    alt={altText}
+    width={asset.w}
+    height={asset.h}
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={eager ? 'high' : undefined}
+    decoding="async"
+    style={`width:${emWidth};height:${emHeight};`}
+    class:list={['block max-w-full', className]}
+/>

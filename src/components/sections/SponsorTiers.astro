@@ -1,0 +1,55 @@
+---
+/** Tarjetas completas de beneficios, p.11 real del PDF. */
+import Screen from '../ui/Screen.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import PackageCard from '../ui/PackageCard.astro';
+import { sponsors } from '../../data/content';
+import { sponsorCurrencySymbol, sponsorTiers } from '../../data/sponsors';
+import { media } from '../../data/media';
+
+const { class: className = '' } = Astro.props;
+---
+
+<Screen
+    tone="navy"
+    bleed
+    container={false}
+    align="start"
+    class={`p-0 ${className}`}
+    id="beneficios"
+    section="sponsor-tiers"
+    aria-labelledby="sponsor-benefits-title"
+>
+    <GridBackdrop center="centered" />
+
+    <div class="relative screen-canvas flex flex-1 flex-col px-6 py-12 canvas:px-0 canvas:pt-[2.625em] canvas:pb-[5.5em]">
+        <header class="flex flex-col gap-4 canvas:flex-row canvas:items-start canvas:justify-between canvas:gap-8">
+            <div>
+                <Eyebrow tone="navy">{sponsors.eyebrow}</Eyebrow>
+                <h2
+                    id="sponsor-benefits-title"
+                    class="sponsor-benefits-title h-page text-white"
+                >
+                    {sponsors.benefitsTitle}
+                </h2>
+            </div>
+            <p class="sponsor-benefits-note text-right text-white/70">
+                {sponsors.benefitsNote}
+            </p>
+        </header>
+
+        <ol
+            class="sponsor-tier-grid grid grid-cols-1 gap-6 sm:grid-cols-2 canvas:grid-cols-[repeat(3,34em)] canvas:gap-[3em]"
+        >
+            {sponsorTiers.map((tier, index) => (
+                <PackageCard
+                    tier={tier}
+                    currencySymbol={sponsorCurrencySymbol}
+                    variant="full"
+                    image={media.sponsorsTierImages[index]}
+                />
+            ))}
+        </ol>
+    </div>
+</Screen>

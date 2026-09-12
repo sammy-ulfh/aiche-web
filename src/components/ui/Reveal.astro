@@ -1,0 +1,45 @@
+---
+/**
+ * Reveal — wrapper que aplica fade + translateY al entrar al viewport.
+ *
+ * ── Mejora progresiva (ADENDA §A2) ──────────────────────────────────
+ * Este componente **no oculta nada por sí mismo**. Marca el elemento con
+ * `data-reveal` y ya está: el estado por defecto es VISIBLE.
+ *
+ * El ocultado y la animación viven en `global.css`, bajo
+ * `html.js-reveal`, y esa clase sólo la pone el script inline del
+ * `<head>` de `Layout.astro`. Sin JS, con `reduce`, o si `reveal.ts`
+ * falla, el contenido se ve completo.
+ *
+ * Antes las reglas estaban en un `<style>` local de este componente y
+ * ocultaban por defecto: ésa fue la causa raíz del bug de contenido
+ * invisible (docs/AUDIT-F2.md §1.3).
+ *
+ * El observer está en `src/scripts/reveal.ts`, importado una sola vez
+ * desde `Layout.astro` y compartido por todas las instancias.
+ *
+ * Props:
+ *  - `as`: elemento a renderizar (default "div").
+ *  - `delay`: delay en ms (default 0). Útil para escalonar.
+ *  - `once`: si es `true` (default), se anima solo la primera vez.
+ */
+interface Props {
+    /** Elemento a renderizar (default "div"). Limitar a etiquetas neutras. */
+    as?: 'div' | 'section' | 'article' | 'header' | 'footer' | 'span' | 'p';
+    delay?: number;
+    once?: boolean;
+    class?: string;
+}
+
+const props = Astro.props as Props;
+const { as: Tag = 'div', delay = 0, once = true, class: className = '' } = props;
+---
+
+<Tag
+    data-reveal
+    data-reveal-delay={delay}
+    data-reveal-once={once ? 'true' : 'false'}
+    class={className}
+>
+    <slot />
+</Tag>

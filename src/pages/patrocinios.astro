@@ -1,0 +1,53 @@
+---
+/**
+ * /patrocinios — Página de patrocinios (RULES §8, §9.5).
+ *
+ * Página de negocio: se enseña a una empresa. Máximo cuidado.
+ * Ensamblada en S6 con composición:
+ *   1. `<SponsorHero />` — hero (p.9): eyebrow + título + párrafo +
+ *      etiqueta TRES PAQUETES + 3 cajas con borde superior destacado +
+ *      imagen grande a la derecha. La imagen es la candidata a LCP.
+ *   2. `<SponsorTiers />` — "Qué recibe tu empresa" (p.10): 3 tarjetas
+ *      con imagen, PAQUETE N, N BENEFICIOS (calculado del array),
+ *      precio y lista verbatim de beneficios.
+ *   3. `<CompetitionInfo variant="cream" id="competencia" />` —
+ *      "La competencia" en variante crema (p.11 del PDF; reutiliza el
+ *      componente de S5). El ancla `#competencia` permite enlazar
+ *      desde fuera (futuro email/folleto).
+ * Fuentes:
+ *   - `data/sponsors.ts` — paquetes, moneda y paquete destacado.
+ *   - `data/content.ts → sponsors.*` — meta y copy.
+ *   - `data/media.ts → sponsorsHero / sponsorsTierImages` — imágenes.
+ *
+ * Impresión: la página se imprime bien a PDF (RULES §6 S6). Los
+ * estilos `@media print` viven en `styles/global.css`: ocultan nav y
+ * footer, quitan el degradado del GridBackdrop y garantizan
+ * `break-inside: avoid` en las tarjetas. Los fondos navy pasan a
+ * blanco con texto navy para no quemar tóner.
+ *
+ * El `<h1>` es `sponsors.title` (RULES §13: un solo h1 por página).
+ */
+import Layout from '../layouts/Layout.astro';
+import SponsorHero from '../components/sections/SponsorHero.astro';
+import SponsorTiers from '../components/sections/SponsorTiers.astro';
+import CompetitionInfo from '../components/sections/CompetitionInfo.astro';
+import { seoRoutes } from '../data/content';
+
+const title = seoRoutes.sponsors.title;
+// La descripción sale de `seoRoutes`, igual que el título: es texto
+// escrito para el buscador, no el copy visible de la página. Hasta F7
+// estas tres rutas cogían el párrafo de la diapositiva y producían
+// descripciones de 288 y de 34 caracteres.
+const description = seoRoutes.sponsors.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    {/* ============== Hero (p.9) ============== */}
+    <SponsorHero />
+
+    {/* ============== Qué recibe tu empresa (p.10) ============== */}
+    <SponsorTiers />
+
+    {/* ============== La competencia (variante cream = p.11) ============== */}
+    <CompetitionInfo variant="cream" id="competencia" />
+</Layout>

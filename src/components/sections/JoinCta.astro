@@ -1,0 +1,78 @@
+---
+/**
+ * JoinCta — bloque "¡Súmate al capítulo!" (RULES §9.8, p.9 del PDF).
+ *
+ * Medidas de F4 sobre el PDF a 1920×1080:
+ *   isotipo        244×281, centrado en x=960
+ *   título         línea base y=460
+ *   bajada         26.7px, línea base y=520
+ *   botones        66px de alto, 18px de hueco, línea base y=624
+ *   banda navy     de 0 a 831; debajo empieza el footer crema
+ *
+ * Dos adaptaciones al lenguaje de las páginas 10-14 (RULES §4):
+ *  - El título del PDF va en Arial Bold 69.3px; aquí usa la tipografía y
+ *    el escalón de título de sección del sistema (Segoe UI Bold, 74px),
+ *    que es lo que emplean las páginas definitivas.
+ *  - Esta es la última pantalla de la página, así que comparte alto con
+ *    el footer: lo resuelve `global.css` con `--footer-h`, sin que la
+ *    sección tenga que saber nada.
+ *
+ * Reutilizable: en S7 se renderiza también en `/contacto` con el
+ * `id="unete"` (destino del botón "Únete" del nav).
+ */
+import Logo from '../ui/Logo.astro';
+import Screen from '../ui/Screen.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import ContactActions from '../ui/ContactActions.astro';
+import Reveal from '../ui/Reveal.astro';
+import { joinCta, contactActions } from '../../data/content';
+import { media } from '../../data/media';
+
+interface Props {
+    /** Ancla opcional. /contacto pasa `id="unete"` (destino del botón del nav). */
+    id?: string;
+    class?: string;
+}
+
+const { id, class: className = '' } = Astro.props;
+// Un `<section>` sin nombre accesible no se anuncia como región: el
+// `aria-labelledby` de `Screen` apunta siempre al titular de la pantalla
+// (RULES §13). Cuando la pantalla es el `h1` de la página el id es el
+// `page-title` que espera `<main aria-labelledby>`; si no, uno propio.
+const headingId = id ? `${id}-title` : 'join-title';
+---
+
+<Screen
+    id={id}
+    tone="navy"
+    container={false}
+    class={`relative ${className}`}
+    section="join-cta"
+    aria-labelledby={headingId}
+>
+    <GridBackdrop />
+
+    <div class="relative flex flex-col items-center text-center">
+        <Reveal>
+            <Logo asset={media.isotipo} size={244} />
+        </Reveal>
+
+        <Reveal delay={100} class="mt-12">
+            <h2 id={headingId} class="h-section text-white">
+                {joinCta.title}
+            </h2>
+        </Reveal>
+
+        {/* 26.7px sobre el lienzo: el `em` es relativo a `--screen-fs`,
+             que es el tamaño heredado en esta rama del árbol. */}
+        <Reveal delay={150} class="mt-6">
+            <p class="text-[1.67em] leading-none text-white/85">
+                {joinCta.subtitle}
+            </p>
+        </Reveal>
+
+        <Reveal delay={200} class="mt-10">
+            <ContactActions contact={contactActions} variant="buttons" />
+        </Reveal>
+    </div>
+</Screen>

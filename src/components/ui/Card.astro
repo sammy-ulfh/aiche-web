@@ -1,0 +1,41 @@
+---
+/**
+ * Card — contenedor rectangular con borde y padding.
+ *
+ * Variantes:
+ *  - `tone`: "navy" (fondo navy-900, borde white/15) | "cream" (fondo cream, borde navy/15) | "outline" (transparente, solo borde).
+ *  - `padding`: escala de padding interno.
+ */
+interface Props {
+    tone?: 'navy' | 'cream' | 'outline';
+    padding?: 'sm' | 'md' | 'lg' | 'none';
+    class?: string;
+    as?: 'div' | 'article' | 'section' | 'li';
+}
+
+const {
+    tone = 'navy',
+    padding = 'md',
+    class: className = '',
+    as: Tag = 'div',
+} = Astro.props;
+
+const tones: Record<NonNullable<Props['tone']>, string> = {
+    navy: 'bg-navy-900 text-white border border-white/15',
+    cream: 'bg-cream text-ink border border-navy/15',
+    outline: 'bg-transparent border border-current',
+};
+
+const paddings: Record<NonNullable<Props['padding']>, string> = {
+    none: '',
+    sm: 'p-3',
+    md: 'p-5 canvas:p-6',
+    lg: 'p-7 canvas:p-8',
+};
+
+const cls = [tones[tone], paddings[padding], className];
+---
+
+<Tag class:list={cls}>
+    <slot />
+</Tag>

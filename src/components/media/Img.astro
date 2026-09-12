@@ -1,0 +1,124 @@
+---
+/**
+ * Img — `<picture>` con AVIF/WebP, `srcset` y fallback (RULES §12.3).
+ *
+ * ── Cómo resuelve el archivo ─────────────────────────────────────────
+ * El manifiesto (`data/media.ts`) sigue declarando rutas del tipo
+ * `/media/team/board-01.jpg`. Desde F8 esa cadena **ya no es una URL
+ * pública**: es la **clave** de un archivo en `src/assets/media/`, que es
+ * donde Astro puede procesarlo. La conversión es directa —
+ * `/media/…` → `/src/assets/media/…` — y el glob de abajo la resuelve en
+ * build.
+ *
+ * Se mantiene así, y no pasando `ImageMetadata` desde `data/`, por dos
+ * razones: `data/` no tiene que saber nada del pipeline de imágenes
+ * (ADENDA §A4) y los cuatro consumidores de este componente no cambian
+ * de API.
+ *
+ * **Sustituir un placeholder sigue siendo dejar otro archivo con el mismo
+ * nombre** (regla 8), sólo que ahora en `src/assets/media/…` en lugar de
+ * `public/media/…`. Ver `docs/ASSETS.md` §3.
+ *
+ * Si la clave no existe, se lanza en build. Antes esto habría pasado
+ * silenciosamente y habría dejado un `<img>` roto en producción.
+ *
+ * ── Qué emite ────────────────────────────────────────────────────────
+ * `<picture>` con `<source>` AVIF y WebP y un `<img>` de fallback en el
+ * formato original. Cada `source` lleva `srcset` con la escalera de
+ * anchos que tenga sentido para ese archivo (nunca por encima de su ancho
+ * intrínseco: ampliar no añade información y sí bytes).
+ *
+ * Reglas (RULES §3.4, §10, §12.3):
+ *  - Lazy por defecto. Pasar `eager` solo para el LCP.
+ *  - `width`/`height` SIEMPRE declarados → CLS = 0.
+ *  - `alt` obligatorio en español; `decorative` para las puramente
+ *    visuales (RULES §10.4).
+ *  - `sizes` lo pone quien lo usa: sin él el navegador supone `100vw` y
+ *    se baja la variante más grande de la escalera. Los anchos reales de
+ *    cada hueco están medidos en `docs/PERFORMANCE.md` §3.4.
+ */
+import { getImage } from 'astro:assets';
+
+interface Props {
+    src: string;
+    alt?: string;
+    /** Pasar `true` para imágenes puramente decorativas. */
+    decorative?: boolean;
+    width: number;
+    height: number;
+    /** Descriptor `sizes`. Sin él, el navegador supone `100vw`. */
+    sizes?: string;
+    loading?: 'lazy' | 'eager';
+    fetchpriority?: 'high' | 'low' | 'auto';
+    class?: string;
+}
+
+const {
+    src,
+    alt,
+    decorative = false,
+    width,
+    height,
+    sizes,
+    loading = 'lazy',
+    fetchpriority,
+    class: className = '',
+} = Astro.props;
+
+const finalAlt = decorative ? '' : (alt ?? '');
+const role = decorative ? 'presentation' : undefined;
+
+/* Todos los rasterizados del sitio, resueltos en build. `eager: true`
+ * porque son 20 archivos: un glob perezoso obligaría a `await` por
+ * imagen sin ganar nada. */
+const assets = import.meta.glob<{ default: ImageMetadata }>(
+    '/src/assets/media/**/*.{jpg,jpeg,png}',
+    { eager: true },
+);
+
+const key = `/src/assets${src}`;
+const entry = assets[key];
+if (!entry) {
+    throw new Error(
+        `Img: no existe "${key}". El manifiesto declara "${src}", así que ` +
+            `el archivo tiene que estar en src/assets/media/… (docs/ASSETS.md §3).`,
+    );
+}
+const image = entry.default;
+
+/* Escalera de anchos. Los huecos reales del sitio van de 159px (retrato
+ * de la mesa directiva en móvil) a 824px (foto de grupo a 1920), así que
+ * con densidad 2× el techo útil ronda los 1650. Se recortan los pasos que
+ * superen el ancho intrínseco del archivo. */
+const LADDER = [320, 480, 640, 960, 1280, 1600];
+const widths = [...LADDER.filter((w) => w < image.width), image.width];
+
+const [avif, webp, fallback] = await Promise.all([
+    getImage({ src: image, widths, format: 'avif' }),
+    getImage({ src: image, widths, format: 'webp' }),
+    getImage({ src: image, widths, format: image.format }),
+]);
+---
+
+{/* `display: contents`: el `<picture>` no genera caja, así que el `<img>`
+  * se comporta exactamente igual que antes de envolverlo — mismas clases,
+  * mismo `absolute inset-0` resuelto contra el marco, y ninguna caja
+  * inline de más donde la imagen va en flujo (el lockup del footer, el
+  * recorte del Chem-E-Car). */}
+<picture class="contents">
+    <source type="image/avif" srcset={avif.srcSet.attribute} sizes={sizes} />
+    <source type="image/webp" srcset={webp.srcSet.attribute} sizes={sizes} />
+    <img
+        src={fallback.src}
+        srcset={fallback.srcSet.attribute}
+        sizes={sizes}
+        alt={finalAlt}
+        width={width}
+        height={height}
+        loading={loading}
+        decoding="async"
+        fetchpriority={fetchpriority}
+        role={role}
+        class:list={['block h-auto max-w-full', className]}
+    />
+</picture>

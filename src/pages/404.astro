@@ -1,0 +1,95 @@
+---
+/**
+ * /404 — Página de no encontrado.
+ *
+ * RULES §8 exige el mismo Layout que el resto (nav + footer). Se
+ * completa en S7 con copy orientativo y enlaces a las rutas
+ * principales (Inicio, Acerca, Participaciones, Patrocinios,
+ * Contacto) para que la visita no quede muerta.
+ *
+ * Marcada `noindex` para que los buscadores no la indexen
+ * (es una página de error, no contenido).
+ */
+import Layout from '../layouts/Layout.astro';
+import Screen from '../components/ui/Screen.astro';
+import Eyebrow from '../components/ui/Eyebrow.astro';
+import Button from '../components/ui/Button.astro';
+import Reveal from '../components/ui/Reveal.astro';
+import GridBackdrop from '../components/ui/GridBackdrop.astro';
+import { notFound } from '../data/content';
+import { mainNav } from '../data/nav';
+
+const { eyebrow, title, body, ctaLabel, usefulHeading } = notFound;
+
+/** Solo las hojas del nav (más "Inicio") son útiles en un 404. */
+const usefulLinks = [
+    { label: 'Inicio', href: '/' },
+    ...mainNav.flatMap((item) => {
+        if (!item.hasSubmenu || !item.children?.length) {
+            return [{ label: item.label, href: item.href }];
+        }
+        // Para entradas con submenú, preferimos el enlace del padre
+        // y añadimos el hijo si apunta a una subruta (no a un ancla).
+        return [
+            { label: item.label, href: item.href },
+            ...item.children
+                .filter((child) => child.href.startsWith('/'))
+                .map((child) => ({ label: child.label, href: child.href })),
+        ];
+    }),
+] as const;
+---
+
+<Layout
+    title="No encontrado"
+    description={body}
+    noindex
+    mainLabel="page-title"
+>
+    <Screen tone="navy" bleed class="relative" aria-labelledby="page-title">
+        <GridBackdrop />
+        <div class="relative mx-auto max-w-3xl px-6 py-20 text-center canvas:py-28">
+            <Reveal>
+                <div class="flex flex-col items-center gap-5">
+                    <Eyebrow tone="navy">{eyebrow}</Eyebrow>
+                    <h1 id="page-title" class="h-section text-white">
+                        {title}
+                    </h1>
+                    <p class="max-w-xl text-base text-white/85 canvas:text-lg">
+                        {body}
+                    </p>
+                    <div class="pt-2">
+                        <Button variant="secondary" href="/" size="lg">
+                            {ctaLabel}
+                        </Button>
+                    </div>
+                </div>
+            </Reveal>
+        </div>
+    </Screen>
+
+    <Screen tone="default" aria-labelledby="useful-links-title">
+        <div class="mx-auto max-w-3xl">
+            <Reveal>
+                <nav aria-labelledby="useful-links-title" class="flex flex-col gap-4">
+                    <h2 id="useful-links-title" class="h-card-sm text-navy">
+                        {usefulHeading}
+                    </h2>
+                    <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {usefulLinks.map((link) => (
+                            <li>
+                                <a
+                                    href={link.href}
+                                    class="flex items-center justify-between border border-navy/15 bg-white px-5 py-4 text-base font-semibold text-navy transition-colors hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+                                >
+                                    <span>{link.label}</span>
+                                    <span aria-hidden="true" class="text-navy-700">→</span>
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            </Reveal>
+        </div>
+    </Screen>
+</Layout>

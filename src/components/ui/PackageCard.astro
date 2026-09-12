@@ -1,0 +1,111 @@
+---
+/** Una tarjeta de paquete con las variantes compacta y completa del PDF. */
+import MediaFrame from '../media/MediaFrame.astro';
+import type { SponsorTier } from '../../data/sponsors';
+import type { ImageAsset } from '../../data/media';
+
+type Props =
+    | {
+          tier: SponsorTier;
+          currencySymbol: string;
+          variant: 'compact';
+          priceSize?: 'md' | 'lg';
+          padding?: 'compact' | 'normal';
+          class?: string;
+      }
+    | {
+          tier: SponsorTier;
+          currencySymbol: string;
+          variant: 'full';
+          image: ImageAsset;
+          class?: string;
+      };
+
+const props = Astro.props as Props;
+const className = props.class ?? '';
+---
+
+{props.variant === 'compact' && (
+    <li
+        class:list={[
+            'sponsor-package-compact flex h-full flex-col border border-navy-200/40 border-t-[0.3125em] bg-transparent',
+            props.tier.featured
+                ? 'border-t-navy-500'
+                : 'border-t-navy-200/50',
+            (props.padding ?? 'normal') === 'compact'
+                ? 'px-[1.45em] pt-[1.2em] pb-[0.5125em]'
+                : 'p-6',
+            className,
+        ]}
+        data-tier={props.tier.id}
+        data-featured={props.tier.featured ? 'true' : 'false'}
+    >
+        <span class="eyebrow t-tag text-navy-200">
+            {props.tier.label}
+        </span>
+        <span
+            class:list={[
+                'sponsor-package-compact-price font-bold text-white',
+                (props.priceSize ?? 'md') === 'lg' &&
+                    'sponsor-package-compact-price-lg',
+            ]}
+        >
+            {props.currencySymbol}{props.tier.price}
+        </span>
+    </li>
+)}
+
+{props.variant === 'full' && (
+    <li
+        class:list={[
+            'print-card sponsor-package-full flex h-full flex-col border border-navy-200/45 border-t-[0.3125em] text-white',
+            props.tier.featured
+                ? 'border-t-navy-500'
+                : 'border-t-navy-200/50',
+            className,
+        ]}
+        data-tier={props.tier.id}
+        data-featured={props.tier.featured ? 'true' : 'false'}
+    >
+        <MediaFrame
+            asset={props.image}
+            ratio="544/177"
+            sizes="(min-width: 80rem) 29vw, 88vw"
+            class="shrink-0"
+        />
+
+        <div
+            class:list={[
+                'sponsor-package-panel flex flex-1 flex-col px-[2.25em] py-[1.75em]',
+                props.tier.featured && 'bg-white/[0.04]',
+            ]}
+        >
+            <div class="flex items-baseline justify-between gap-4">
+                <span class="eyebrow t-tag text-navy-200">
+                    {props.tier.label}
+                </span>
+                <span class="eyebrow t-tag text-white/65">
+                    {props.tier.benefits.length} BENEFICIOS
+                </span>
+            </div>
+
+            <span class="sponsor-package-full-price mt-[0.22em] font-bold text-white">
+                {props.currencySymbol}{props.tier.price}
+            </span>
+
+            <div class="mt-[1.25em] h-px w-full bg-navy-200/45"></div>
+
+            <ul class="sponsor-benefits mt-[1.2em] flex flex-col gap-[0.75em] text-white/80">
+                {props.tier.benefits.map((benefit) => (
+                    <li class="flex gap-[0.9em]">
+                        <span
+                            aria-hidden="true"
+                            class="mt-[0.58em] h-[0.35em] w-[0.35em] flex-none bg-navy-200"
+                        ></span>
+                        <span>{benefit}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    </li>
+)}

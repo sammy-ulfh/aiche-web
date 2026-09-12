@@ -1,0 +1,32 @@
+# Build outputs
+dist/
+.astro/
+
+# Cache y rasterizaciones de design/
+.cache/
+
+# Dependencias
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+bun-install.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Lighthouse / capturas locales (S10 las commitea a docs/media/)
+lighthouse-report.*

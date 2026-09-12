@@ -1,0 +1,28 @@
+---
+/**
+ * /equipo — Nuestro equipo (p.13 del PDF).
+ *
+ * Es la página del primer item del menú. Antes vivía en `/acerca/equipo`,
+ * colgando de un «Acerca de nosotros» que llevaba a otra cosa: la
+ * diapositiva de presentación del capítulo, que desde ahora vive en el
+ * home, debajo del contador. Ver D-153.
+ *
+ * La p.13 es **una sola diapositiva**: eyebrow, título y las dos columnas
+ * comparten pantalla. Toda la composición vive en `TeamGrid`, incluido el
+ * h1 (`id="page-title"`).
+ *
+ * Los datos de los integrantes vienen de `src/data/team.ts`
+ * (placeholders hasta confirmación del usuario) y el copy del
+ * encabezado de `src/data/content.ts` (`team`).
+ */
+import Layout from '../layouts/Layout.astro';
+import TeamGrid from '../components/sections/TeamGrid.astro';
+import { seoRoutes } from '../data/content';
+
+const title = seoRoutes.team.title;
+const description = seoRoutes.team.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    <TeamGrid />
+</Layout>

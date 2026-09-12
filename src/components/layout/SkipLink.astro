@@ -1,0 +1,20 @@
+---
+/**
+ * SkipLink — primer elemento enfocable de la página.
+ * RULES §7.5: aparece antes del Nav.
+ *
+ * Visualmente oculto hasta que recibe foco (tecla Tab al cargar),
+ * momento en que se muestra y salta al `<main>`.
+ *
+ * El texto del enlace viene de `data/nav.ts → chrome.skipLink`
+ * (RULES §6: ningún string de copy vive en un .astro).
+ */
+import { chrome } from '../../data/nav';
+---
+
+<a
+    href="#main"
+    class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-navy focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+>
+    {chrome.skipLink}
+</a>

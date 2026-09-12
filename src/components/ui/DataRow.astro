@@ -1,0 +1,35 @@
+---
+/**
+ * DataRow — banda blanca «etiqueta + valor» de la tarjeta de evento (p.7).
+ *
+ * La etiqueta va en Arial con tracking sobre la banda blanca y el valor
+ * en Segoe UI; el par va centrado en la banda —vertical y
+ * horizontalmente— y se apila debajo cuando la composición es estrecha.
+ *
+ * Medidas de la p.7 a escala 1:1: banda de 60px de alto, con 31px de
+ * padding lateral; etiqueta a 16px de Arial Bold y valor a 21.33px de
+ * Segoe UI. La banda no llega al borde de la tarjeta: la sangra el `<dl>`
+ * de `EventCard` 31px a cada lado, para acabar a la misma altura que los
+ * separadores de la lista de competencias del bloque de abajo.
+ *
+ * **Tenía una variante `navy`** para la tarjeta del home, que desapareció
+ * con `NextEvent` (D-153).
+ */
+interface Props {
+    label: string;
+    value: string;
+    /** HTML extra si el valor contiene elementos (p. ej. un enlace). */
+    valueHtml?: string;
+}
+
+const { label, value, valueHtml } = Astro.props;
+---
+
+<div
+    class="event-data-row flex flex-col items-center justify-center gap-1 bg-white px-[1.9375em] text-center sm:flex-row sm:gap-4"
+>
+    <dt class="eyebrow t-label text-navy-700">{label}</dt>
+    <dd class="event-data-value text-chrome-ink">
+        {valueHtml ? <Fragment set:html={valueHtml} /> : value}
+    </dd>
+</div>

@@ -1,0 +1,60 @@
+---
+/**
+ * Footer — banda crema de cierre (p.9 del PDF).
+ *
+ * Medidas tomadas en F4 sobre el PDF rasterizado a 1920×1080:
+ *   banda crema      y 833..1024  → 192px de alto (`--footer-h`)
+ *   lockup AIChE     230×86, a la izquierda, centrado en vertical
+ *   línea legal      Arial Bold 16px #0e2033 con tracking, a la derecha
+ *
+ * Dos correcciones de fidelidad respecto a S1:
+ *  - El isotipo + wordmark "AIChE GDL" se sustituye por el **lockup
+ *    institucional del American Institute of Chemical Engineers**, que
+ *    es lo que el PDF pone aquí (`media.aicheInstitucional`, extraído del
+ *    propio PDF). Su fondo ya es crema, el mismo de la banda.
+ *  - Se retiran el correo y el Instagram: no están en el footer del PDF
+ *    (eran un añadido de S1). El contacto vive en `/contacto`, que está
+ *    en el nav, y en el bloque "¡Súmate al capítulo!" que precede al
+ *    footer en el home.
+ *
+ * El margen lateral es el del lienzo (96px), no los 63px que mide la
+ * p.9: RULES §4 pide unificar los márgenes con las páginas 10-14.
+ *
+ * `--footer-h` se declara aquí y la consume `global.css` para que la
+ * última pantalla de cada página deje sitio al footer sin que las dos
+ * medidas puedan desincronizarse.
+ */
+import Img from '../media/Img.astro';
+import { media } from '../../data/media';
+import { footerLegalText, footerBuildYear } from '../../data/site';
+---
+
+<footer
+    class="flex min-h-[var(--footer-h)] items-center bg-cream text-ink"
+>
+    <div
+        class="mx-auto flex w-full max-w-[120rem] flex-col items-center gap-6 px-6 py-8 sm:flex-row sm:justify-between sm:gap-8 canvas:px-24 canvas:py-0"
+    >
+        {/* El lockup institucional es un enlace a `/` y no tenía estado de
+          * hover (F6): con el ratón encima no pasaba nada. En un enlace que
+          * es sólo imagen, la atenuación es el recurso estándar y no mueve
+          * la composición. */}
+        <a
+            href="/"
+            class="block transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-700"
+        >
+            <Img
+                src={media.aicheInstitucional.src}
+                alt={media.aicheInstitucional.alt}
+                width={media.aicheInstitucional.w}
+                height={media.aicheInstitucional.h}
+                sizes="230px"
+                class="w-[14.375rem]"
+            />
+        </a>
+
+        <p class="eyebrow text-center text-xs text-chrome-ink sm:text-right">
+            {footerLegalText} &copy; {footerBuildYear}
+        </p>
+    </div>
+</footer>

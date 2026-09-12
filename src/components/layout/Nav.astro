@@ -1,0 +1,164 @@
+---
+/**
+ * Nav — barra de navegación principal.
+ *
+ * Reconstruida en F4 contra las páginas 10-14 del PDF, que son el
+ * lenguaje visual definitivo (RULES §4). Todas las medidas están
+ * tomadas del PDF rasterizado a 1920×1080:
+ *
+ *   alto de la barra          80px  (y 0..79, con 1px de línea inferior)
+ *   bloque INICIO             100px de ancho, navy, icono sobre etiqueta
+ *   isotipo en teja clara     56px, x 128..184
+ *   wordmark "AIChE GDL"      22.8px, navy, línea base y=39
+ *   bajada TEC DE MONTERREY…  13.2px, gris, tracking 0.14em
+ *   items del menú            15.6px Arial Bold #0e2033, hueco de 40px
+ *   subrayado del activo      3px navy-500, 13px por encima del borde
+ *   bloque Únete              134px de ancho, navy-600, x 1786..1919
+ *                             (navy-500 del PDF oscurecido un 10 % para
+ *                              que el texto blanco pase AA — F7, D-164)
+ *
+ * La barra **no lleva contenedor centrado**: en el PDF el bloque INICIO
+ * arranca en x=0 y el de Únete termina en x=1920. El grupo de items
+ * queda centrado en el hueco entre la identidad y Únete (312px a cada
+ * lado en el diseño), que es exactamente lo que produce `flex-1` +
+ * `justify-center`.
+ *
+ * La superficie es gris claro `chrome` (#d0d4d7), no crema: se midieron
+ * ambas y la barra del PDF es un gris neutro. La desviación S-3 de
+ * `docs/AUDIT-F2.md` («la barra del PDF es navy») era incorrecta; el
+ * error se corrige en la bitácora de F4 según ADENDA §A5.
+ *
+ * Reglas técnicas conservadas de S1:
+ *  - Sticky con sentinel + IntersectionObserver (`scripts/nav.ts`) → sin
+ *    listeners de scroll (RULES §7.1).
+ *  - Altura fija reservada desde el primer render → cero CLS (§7.7).
+ *  - `aria-current="page"` desde `Astro.url.pathname` (§7.4).
+ *  - Submenús accesibles (§7.2) y menú móvil con focus trap (§7.3).
+ *
+ * **F5b — los items con subpágina son enlaces directos.** «Acerca de
+ * nosotros», «Participaciones» y «Patrocinios» tienen página propia:
+ * pulsarlos navega a ella y ya no llevan el «+» que dibuja el PDF. El
+ * submenú se abre en CSS (`:hover` / `:focus-within`). Es la única
+ * desviación deliberada del nav respecto al diseño y responde a una
+ * petición explícita del usuario (D-138).
+ */
+import { mainNav, homeLink, brand, joinHref, joinLabel, chrome } from '../../data/nav';
+import { media } from '../../data/media';
+import Logo from '../ui/Logo.astro';
+import NavDropdown from './NavDropdown.astro';
+import MobileMenu from './MobileMenu.astro';
+
+const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/';
+const currentPath = normalizePath(Astro.url.pathname);
+const isHome = currentPath === homeLink.href;
+---
+
+<header
+    data-nav
+    data-stuck="false"
+    class="sticky top-0 z-50 h-[var(--nav-h)] w-full border-b border-ink/15 bg-chrome text-chrome-ink"
+>
+    {/* Sentinel de 1px que el IntersectionObserver vigila (RULES §7.1). */}
+    <div data-nav-sentinel aria-hidden="true" class="absolute -top-1 left-0 h-px w-px"></div>
+
+    <nav class="flex h-full w-full items-stretch" aria-label={chrome.navAria}>
+        {/* Bloque INICIO: 100px, icono de casa sobre la etiqueta. */}
+        <a
+            href={homeLink.href}
+            class:list={[
+                'flex w-[4.5rem] shrink-0 flex-col items-center justify-center gap-1 bg-navy text-white transition-colors canvas:w-[6.25rem]',
+                'hover:bg-navy-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream',
+            ]}
+            aria-current={isHome ? 'page' : undefined}
+            aria-label={chrome.homeAria}
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="19"
+                height="19"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="square"
+                stroke-linejoin="miter"
+                aria-hidden="true"
+            >
+                <path d="M3.5 11.5 L12 4 L20.5 11.5"></path>
+                <path d="M6 10 V20 H18 V10"></path>
+            </svg>
+            <span class="eyebrow text-[0.7875rem] leading-none">{homeLink.label}</span>
+        </a>
+
+        {/* Identidad: isotipo sobre teja clara + wordmark + bajada. */}
+        <a
+            href={homeLink.href}
+            class="group ml-3 flex min-w-0 items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-700 canvas:ml-7 canvas:shrink-0"
+        >
+            {/* Sin `aria-label`: el nombre accesible sale del texto visible
+              * más el sufijo sr-only. Con el `aria-label` que había, el
+              * nombre («AIChE GDL — ir al inicio») no contenía la bajada
+              * visible y se incumplía WCAG 2.5.3 «Label in Name»
+              * (Lighthouse `label-content-name-mismatch`, F7). El isotipo
+              * va con alt vacío porque el wordmark de al lado ya lo dice. */}
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center bg-transparent canvas:h-14 canvas:w-14">
+                <Logo asset={media.isotipo} size={38} eager alt="" />
+            </span>
+            <span class="flex min-w-0 flex-col gap-0.5">
+                {/* El lockup es un enlace a `/` y hasta F6 no tenía ningún
+                  * estado de hover: con el ratón encima no pasaba nada y
+                  * nada decía que fuera pulsable. Subraya el wordmark —no
+                  * la bajada, que es una etiqueta— y no mueve un píxel de
+                  * la composición medida en F4 (isotipo en x=128). */}
+                <span class="truncate text-[1.15rem] font-bold leading-none text-navy underline-offset-4 group-hover:underline canvas:text-[1.425rem]">{brand.wordmark}</span>
+                <span
+                    class="eyebrow eyebrow-tagline hidden text-[0.825rem] leading-none text-ink/60 canvas:block"
+                >{brand.tagline}</span>
+            </span>
+            <span class="sr-only">{chrome.brandLinkSuffix}</span>
+        </a>
+
+        {/* Items del menú, centrados en el hueco (desktop). */}
+        <ul class="hidden flex-1 items-stretch justify-center gap-10 canvas:flex">
+            {mainNav.map((item) => {
+                if (true) {
+                    const isCurrent = currentPath === item.href;
+                    return (
+                        <li class="flex items-stretch">
+                            <a
+                                href={item.href}
+                                aria-current={isCurrent ? 'page' : undefined}
+                                class:list={[
+                                    'relative flex items-center font-ui text-[0.975rem] font-bold transition-colors',
+                                    // El item de la página actual ya es navy, así que
+                                    // `hover:text-navy` era un no-op y el enlace se
+                                    // quedaba sin respuesta al ratón (F6). Aclara a
+                                    // navy-700, igual que el bloque INICIO.
+                                    isCurrent
+                                        ? 'text-navy hover:text-navy-700 focus-visible:text-navy-700'
+                                        : 'hover:text-navy focus-visible:text-navy',
+                                    isCurrent &&
+                                        'after:absolute after:inset-x-0 after:bottom-[0.8125rem] after:h-[3px] after:bg-navy-500 after:content-[""]',
+                                ]}
+                            >
+                                {item.label}
+                            </a>
+                        </li>
+                    );
+                }
+                return <NavDropdown item={item} currentPath={currentPath} />;
+            })}
+        </ul>
+
+        {/* Bloque Únete al borde derecho: 134px, azul de acento. */}
+        <a
+            href={joinHref}
+            class="ml-auto hidden w-[8.375rem] shrink-0 items-center justify-center bg-navy-600 font-ui text-[0.975rem] font-bold text-white transition-colors hover:bg-navy-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream canvas:flex"
+        >
+            {joinLabel}
+        </a>
+
+        {/* Menú móvil (hamburguesa + panel). */}
+        <MobileMenu items={mainNav} currentPath={currentPath} />
+    </nav>
+</header>

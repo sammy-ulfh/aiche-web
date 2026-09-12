@@ -1,0 +1,113 @@
+---
+/**
+ * MobileMenu — panel móvil que aparece al pulsar la hamburguesa.
+ *
+ * RULES §7.3: hamburguesa, panel completo, focus trap (lo gestiona el
+ * JS), bloqueo de scroll del body (lo gestiona el JS).
+ *
+ * **F5b: sin acordeones.** Los items con subpáginas tienen página
+ * propia, así que el padre es un enlace normal —sin «+»— y sus hijos
+ * quedan listados debajo, siempre visibles. Son tres items con uno a
+ * tres hijos: la lista completa cabe de sobra y desaparece el estado
+ * plegado/desplegado (y su JS).
+ *
+ * El JS vive en `src/scripts/nav.ts`. Aquí solo se renderiza la
+ * estructura y los estados iniciales.
+ */
+import type { NavItem } from '../../data/nav';
+import { joinHref, joinLabel, chrome } from '../../data/nav';
+
+interface Props {
+    items: readonly NavItem[];
+    currentPath: string;
+}
+
+const { items, currentPath } = Astro.props;
+---
+
+<button
+    type="button"
+    class="canvas:hidden ml-auto inline-flex h-full shrink-0 items-center bg-navy px-4 text-white transition-colors hover:bg-navy-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream"
+    aria-label={chrome.mobileOpenAria}
+    aria-controls="mobile-menu-panel"
+    aria-expanded="false"
+    data-mobile-toggle
+>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="square"
+        stroke-linejoin="miter"
+        aria-hidden="true"
+    >
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+</button>
+
+<div
+    id="mobile-menu-panel"
+    class="fixed inset-0 z-40 flex-col bg-navy-900 text-white"
+    data-mobile-panel
+    data-open="false"
+    role="dialog"
+    aria-modal="true"
+    aria-label={chrome.mobilePanelAria}
+>
+    <div class="flex items-center justify-between border-b border-white/15 px-6 py-4">
+        <span class="font-semibold">{chrome.mobilePanelHeading}</span>
+        <button
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+            aria-label={chrome.mobileCloseAria}
+            data-mobile-toggle
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="square"
+                aria-hidden="true"
+            >
+                <line x1="5" y1="5" x2="19" y2="19"></line>
+                <line x1="19" y1="5" x2="5" y2="19"></line>
+            </svg>
+        </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-6 py-6" aria-label={chrome.mobileNavAria}>
+        <ul class="space-y-2">
+            {items.map((item) => (
+                <li>
+                    <a
+                        href={item.href}
+                        class:list={[
+                            'block py-3 text-lg font-semibold transition-colors',
+                            currentPath === item.href && 'text-cream',
+                        ]}
+                        aria-current={currentPath === item.href ? 'page' : undefined}
+                    >
+                        {item.label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+
+        <a
+            href={joinHref}
+            class="mt-8 block bg-navy-700 px-4 py-3 text-center font-semibold uppercase tracking-wider transition-colors hover:bg-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+        >
+            {joinLabel}
+        </a>
+    </nav>
+</div>

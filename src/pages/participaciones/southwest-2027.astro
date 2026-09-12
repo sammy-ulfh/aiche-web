@@ -1,0 +1,32 @@
+---
+/**
+ * /participaciones/southwest-2027 — Detalle de la Southwest Regional.
+ *
+ * F5 reproduce la p.8 real del PDF en una sola pantalla con
+ * `CompetitionInfo variant="navy"`: pregunta principal, banda central,
+ * motivación y recorte del Chem-E-Car. El mismo copy se reutiliza en
+ * `/patrocinios` mediante la variante `cream` (RULES §9.4).
+ *
+ * SEO: JSON-LD `Event` para The 2027 AIChE Southwest Student Regional
+ * Conference (RULES §14). Datos desde `data/seo.ts → eventJsonLd`,
+ * ya alineados con `data/event.ts` (sede en Lake Charles, Louisiana
+ * — unificado en D-005).
+ */
+import Layout from '../../layouts/Layout.astro';
+import CompetitionInfo from '../../components/sections/CompetitionInfo.astro';
+import { seoRoutes } from '../../data/content';
+import { eventJsonLd } from '../../data/seo';
+
+const title = seoRoutes.southwest2027.title;
+const description = seoRoutes.southwest2027.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    <CompetitionInfo variant="navy" />
+
+    {/* JSON-LD `Event` (RULES §14) — único bloque, ya en home. */}
+    <script
+        type="application/ld+json"
+        set:html={JSON.stringify(eventJsonLd)}
+        is:inline></script>
+</Layout>

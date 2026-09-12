@@ -1,0 +1,147 @@
+---
+/**
+ * About — «Acerca de Nosotros», la p.6 del PDF en una sola pantalla.
+ *
+ * Medidas tomadas sobre el PDF rasterizado a 1920×1080 (la p.6 trae capa
+ * de texto, así que los cuerpos salen de `mutool draw -F stext`, no de
+ * una estimación):
+ *
+ *   panel izquierdo      x 0..575 (30 % del lienzo); el fondo es el
+ *                        mismo radial del sitio, recortado ahí
+ *   columna de texto     x 40..542 (502 de ancho)
+ *   asterisco            x 62..178, 110×113
+ *   título               Segoe UI Bold 74px, interlínea 65px, dos líneas,
+ *                        x 180..507
+ *   caja de la pregunta  x 40..542, y 215..405, borde 1px navy-200,
+ *                        Libre Baskerville Italic 36.9px centrada
+ *   caja del cuerpo      x 40..542, y 420..1046, raya de 57×5 arriba y
+ *                        cuerpo justificado de 23.9px / interlínea 27.9
+ *   media                **x 576..1920 a sangre, de arriba abajo**, con
+ *                        la chapa HIGH LIGHTS arriba a la izquierda, el
+ *                        titular y la bajada abajo a la izquierda y la
+ *                        chapa de fecha abajo a la derecha
+ *
+ * **Dónde vive esta diapositiva.** En el home, como continuación directa
+ * del hero, que es como la encadena el PDF: p.1 → p.6. Tuvo página
+ * propia (`/acerca`) hasta que el usuario señaló que el item del menú
+ * «Acerca de nosotros» debía llevar a la presentación del equipo, no
+ * aquí (D-153). La variante `teaser` que resumía este bloque en el home
+ * desapareció con el cambio: ahora el home lleva la diapositiva entera,
+ * así que el resumen no tenía a quién servir — y con él se fue el botón
+ * «Conoce más», que además era un elemento inventado (C-12 de la
+ * auditoría, nunca estuvo en el PDF).
+ *
+ * Única desviación viva: la diapositiva mide 1080px y aquí dispone de
+ * 1000 porque la regla 1 obliga a llevar nav en todas las páginas. Los
+ * bloques de texto conservan cuerpo, interlínea y medida del PDF; lo que
+ * se recorta es el aire de los extremos.
+ *
+ * Sin eyebrow: el PDF (p.6) sólo muestra el título.
+ */
+import Screen from '../ui/Screen.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import VideoHighlight from '../media/VideoHighlight.astro';
+import Reveal from '../ui/Reveal.astro';
+import { about } from '../../data/content';
+import { media } from '../../data/media';
+
+interface Props {
+    /**
+     * Nivel del título de la diapositiva. `h1` cuando es el encabezado
+     * principal de su página; `h2` cuando va debajo de otro bloque que
+     * ya aporta el `h1` — hoy, el hero del home (RULES §13: un solo
+     * `h1` por página).
+     */
+    headingLevel?: 'h1' | 'h2';
+}
+
+const { headingLevel = 'h1' } = Astro.props as Props;
+const HeadingTag = headingLevel;
+const isPageTitle = headingLevel === 'h1';
+// Un `<section>` sin nombre accesible no se anuncia como región: el
+// `aria-labelledby` de `Screen` apunta siempre al titular de la pantalla
+// (RULES §13). Cuando la pantalla es el `h1` de la página el id es el
+// `page-title` que espera `<main aria-labelledby>`; si no, uno propio.
+const headingId = isPageTitle ? 'page-title' : 'about-title';
+
+/**
+ * Asterisco de ocho brazos de la p.6. Ampliado el original a 2× se ve
+ * que no es una estrella de puntas, sino **cuatro barras rectas
+ * cruzadas** de extremos planos: 110×113 px de envolvente y unos 14 px
+ * de grosor, o sea 8.1 sobre un lienzo de 64. Se dibuja aquí y no en
+ * `ui/` porque aparece una sola vez en todo el sitio.
+ */
+const starAngles = [0, 45, 90, 135];
+---
+
+<Screen
+    tone="navy"
+    bleed
+    container={false}
+    align="start"
+    class="about-screen relative p-0"
+    section="about"
+    aria-labelledby={headingId}
+>
+    <GridBackdrop />
+
+    <div class="relative flex flex-1 flex-col canvas:grid canvas:grid-cols-[36em_1fr]">
+        <Reveal class="min-w-0">
+            <div class="about-copy flex flex-col">
+                <header class="flex items-start gap-2 pl-[1.375em]">
+                    <svg
+                        aria-hidden="true"
+                        viewBox="0 0 64 64"
+                        class="mt-1 h-[7.06em] w-[6.875em] shrink-0"
+                        fill="currentColor"
+                    >
+                        {starAngles.map((angle) => (
+                            <rect
+                                x="27.95"
+                                y="1"
+                                width="8.1"
+                                height="62"
+                                transform={`rotate(${angle} 32 32)`}
+                            />
+                        ))}
+                    </svg>
+
+                    <HeadingTag
+                        id={headingId}
+                        class="about-title h-section text-white"
+                    >
+                        {about.title}
+                    </HeadingTag>
+                </header>
+
+                <div class="mt-7 border border-navy-200 p-7">
+                    <p class="quote-serif t-quote text-center text-white">
+                        {about.question}
+                    </p>
+                </div>
+
+                <div class="mt-6 border border-navy-200 p-7">
+                    <span
+                        aria-hidden="true"
+                        class="block h-[0.3125em] w-[3.5625em] bg-white"
+                    ></span>
+                    <p class="mt-6 t-body hyphens-auto text-justify text-white" lang="es">
+                        {about.paragraph}
+                    </p>
+                </div>
+            </div>
+        </Reveal>
+
+        <Reveal delay={150} class="about-media min-w-0">
+            <VideoHighlight
+                asset={media.aboutVideo}
+                fill
+                badge={about.videoBadge}
+                title={about.videoTitle}
+                caption={about.videoCaption}
+                chip={about.videoChip}
+                headingAs={isPageTitle ? 'h2' : 'h3'}
+            />
+        </Reveal>
+    </div>
+</Screen>

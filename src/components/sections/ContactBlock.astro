@@ -1,0 +1,63 @@
+---
+/** Pantalla de contacto, medida contra la p.14 real del PDF. */
+import Screen from '../ui/Screen.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import ContactActions from '../ui/ContactActions.astro';
+import MediaFrame from '../media/MediaFrame.astro';
+import { contact, contactActions } from '../../data/content';
+import { media } from '../../data/media';
+
+const className = Astro.props.class ?? '';
+const headingLevel = Astro.props.as ?? 'h1';
+const Heading = headingLevel as 'h1' | 'h2';
+// Un `<section>` sin nombre accesible no se anuncia como región: el
+// `aria-labelledby` de `Screen` apunta siempre al titular de la pantalla
+// (RULES §13). Cuando la pantalla es el `h1` de la página el id es el
+// `page-title` que espera `<main aria-labelledby>`; si no, uno propio.
+const headingId = headingLevel === 'h1' ? 'page-title' : 'contact-title';
+const [titleFirst, ...titleRest] = contact.title.split(' ');
+---
+
+<Screen
+    tone="navy"
+    bleed
+    container={false}
+    align="start"
+    class={`p-0 ${className}`}
+    section="contact"
+    aria-labelledby={headingId}
+>
+    <GridBackdrop center="centered" />
+
+    <div class="relative screen-canvas flex flex-1">
+        <div
+            class="grid w-full grid-cols-1 gap-10 px-6 py-12 canvas:grid-cols-[52.375em_51.5625em] canvas:gap-[4.1875em] canvas:px-0 canvas:pt-[8.375em] canvas:pb-[13.1875em]"
+        >
+            <div class="flex flex-col canvas:pt-[5.625em]">
+                <Eyebrow tone="navy" class="contact-eyebrow">{contact.eyebrow}</Eyebrow>
+                <Heading
+                    id={headingId}
+                    class="contact-title h-display text-white"
+                >
+                    <span class="block">{titleFirst}</span>
+                    <span class="block">{titleRest.join(' ')}</span>
+                </Heading>
+                <p class="contact-subtitle eyebrow t-eyebrow text-white/80">
+                    {contact.subtitle}
+                </p>
+                <ContactActions
+                    contact={contactActions}
+                    variant="dl"
+                    class="contact-details"
+                />
+            </div>
+
+            <MediaFrame
+                asset={media.contactGroup}
+                ratio="826/655"
+                class="border border-white/35"
+            />
+        </div>
+    </div>
+</Screen>

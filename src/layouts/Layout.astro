@@ -1,0 +1,186 @@
+---
+/**
+ * Layout.astro — punto de entrada de todas las páginas.
+ *
+ * RULES §7: renderiza SIEMPRE `<Nav />` + `<main>` + `<Footer />`,
+ * junto con el skip link. Es el único lugar donde el chrome del sitio
+ * se monta; las páginas se enfocan en el contenido.
+ *
+ * El JS del nav se importa una sola vez aquí (RULES §3.5).
+ *
+ * El CSS global (Tailwind 4 vía `@tailwindcss/vite` + utilidades
+ * semánticas + estilos de impresión) se importa AQUÍ, una sola vez.
+ * Sin este import, Tailwind no emite utilidades en el build de
+ * producción — el sitio renderiza con clases Tailwind sin estilos.
+ * Bug pre-existente de S1 descubierto en S6 al verificar print
+ * styles; fix mínimo en S6.
+ *
+ * SEO (RULES §14): title/description/canonical/OG/Twitter/manifest
+ * + JSON-LD `Organization` global. El JSON-LD `Event` lo inyecta cada
+ * página que mencione el evento (home, /participaciones,
+ * /participaciones/southwest-2027) — así no se duplica en páginas
+ * donde no aplica.
+ *
+ * Accesibilidad (RULES §13): el `<main>` recibe `aria-labelledby`
+ * apuntando al id del h1 de la página. Cada página le pasa
+ * `mainLabel` (la convención es `id="page-title"`). Si no se pasa,
+ * el `<main>` queda sin `aria-labelledby` (los landmarks pueden
+ * quedar sin label si su contenido es autoexplicativo).
+ */
+import '../styles/global.css';
+import {
+    siteName,
+    siteDescription,
+    siteUrl,
+    seoDefaults,
+} from '../data/site';
+import { orgJsonLd } from '../data/seo';
+import SkipLink from '../components/layout/SkipLink.astro';
+import Nav from '../components/layout/Nav.astro';
+import Footer from '../components/layout/Footer.astro';
+
+interface Props {
+    title?: string;
+    description?: string;
+    image?: string;
+    imageAlt?: string;
+    noindex?: boolean;
+    /** id del h1 de la página → `aria-labelledby` en `<main>`. */
+    mainLabel?: string;
+}
+
+const {
+    title,
+    description = siteDescription,
+    image = '/og.jpg',
+    imageAlt = 'AIChE GDL — Tec de Monterrey Campus Guadalajara.',
+    noindex = false,
+    mainLabel,
+} = Astro.props;
+
+// Título de la PESTAÑA: sólo la marca, igual en todas las rutas
+// (petición del usuario). El nombre de la página no entra aquí; para
+// distinguir rutas ya está la URL, y el título descriptivo se sigue
+// publicando en Open Graph / Twitter, que es donde se comparte.
+const documentTitle = siteName;
+// Título descriptivo por ruta, sólo para las tarjetas sociales.
+const socialTitle = title
+    ? `${title} | ${siteName} — Tec de Monterrey Campus Guadalajara`
+    : `${siteName} — ${siteDescription}`;
+// Versión de los iconos de pestaña. El navegador guarda el favicon en
+// una caché aparte que ni un recarga forzada limpia: mientras la URL no
+// cambie, sigue pintando el icono viejo (el de Astro que traía el
+// esqueleto del proyecto). Subir este número cambia la URL y obliga a
+// re-descargarlo. **Súbelo cada vez que sustituyas `favicon.svg` o
+// `favicon.ico`**; el resto del tiempo no se toca.
+const iconVersion = '2';
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const ogImageUrl = new URL(image, siteUrl).toString();
+---
+
+<!doctype html>
+<html lang="es-MX">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="generator" content={Astro.generator} />
+        <link rel="icon" type="image/svg+xml" href={`/favicon.svg?v=${iconVersion}`} />
+        <link rel="icon" type="image/x-icon" href={`/favicon.ico?v=${iconVersion}`} />
+        <link rel="manifest" href="/site.webmanifest" />
+        {/* Una página `noindex` no debe declarar canonical: es una señal
+          * contradictoria (no me indexes / ésta es mi URL preferente) y en
+          * el 404 apuntaría a una URL que no queremos que exista. */}
+        {!noindex && <link rel="canonical" href={canonicalUrl} />}
+        <meta name="theme-color" content={seoDefaults.themeColor} />
+
+        <title>{documentTitle}</title>
+        <meta name="description" content={description} />
+        {noindex && <meta name="robots" content="noindex,nofollow" />}
+
+        {/* Open Graph */}
+        <meta property="og:type" content={seoDefaults.type} />
+        <meta property="og:locale" content={seoDefaults.locale.replace('_', '-')} />
+        <meta property="og:site_name" content={siteName} />
+        <meta property="og:title" content={socialTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:image:alt" content={imageAlt} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content={seoDefaults.twitterCard} />
+        <meta name="twitter:title" content={socialTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImageUrl} />
+        <meta name="twitter:image:alt" content={imageAlt} />
+
+        {/* JSON-LD `Organization` global (RULES §14). El `Event` lo inyecta
+             cada página que mencione el evento, para no duplicarlo donde
+             no aplica. */}
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(orgJsonLd)}
+            is:inline></script>
+
+        {/* Interruptor del reveal (ADENDA §A2). Bloqueante y minúsculo, a
+             propósito: tiene que ejecutarse ANTES del primer paint para que
+             no haya destello de contenido visible que luego se oculta.
+
+             El estado por defecto del HTML es VISIBLE. Esta clase es lo
+             único que autoriza al CSS a ocultar y animar, así que:
+               · sin JS            → la clase nunca se pone   → todo visible;
+               · con `reduce`      → el CSS no oculta          → todo visible;
+               · si reveal.ts no llega a ejecutarse (error de red, parseo o
+                 excepción) → el temporizador de hombre muerto retira la
+                 clase → todo visible.
+
+             `__revealReady` es el apretón de manos: reveal.ts lo llama al
+             tomar el control y desarma el temporizador. */}
+        <script is:inline>
+            (function () {
+                try {
+                    var r = document.documentElement;
+                    r.classList.add('js-reveal');
+                    var t = setTimeout(function () {
+                        r.classList.remove('js-reveal');
+                    }, 2000);
+                    window.__revealReady = function () {
+                        clearTimeout(t);
+                    };
+                } catch (e) {
+                    document.documentElement.classList.remove('js-reveal');
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <SkipLink />
+        <Nav />
+        <main
+            id="main"
+            class="min-h-[60vh]"
+            aria-labelledby={mainLabel}
+        >
+            <slot />
+        </main>
+        <Footer />
+
+        {/* Scripts de cliente globales. Cada responsabilidad va en su propio
+         * bloque `<script>` a propósito (ADENDA §A2): son módulos separados,
+         * y además cada uno lleva su IIFE + try/catch, así que una excepción
+         * en uno no impide que el otro se inicialice.
+         *
+         * `reveal.ts` se importa AQUÍ, no desde `Reveal.astro`: tiene que
+         * llegar a todas las rutas. Importarlo desde la página del kit de UI
+         * —que S09 borró— fue la causa raíz del bug de contenido invisible
+         * (docs/AUDIT-F2.md §1.5). */}
+        <script>
+            import '../scripts/nav.ts';
+        </script>
+        <script>
+            import '../scripts/reveal.ts';
+        </script>
+    </body>
+</html>

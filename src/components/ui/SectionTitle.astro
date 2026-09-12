@@ -1,0 +1,39 @@
+---
+/**
+ * SectionTitle — encabezado estándar de sección.
+ *
+ * Consta de un Eyebrow opcional + un título fluido. Mantiene la escala
+ * tipográfica (RULES §5.4): h1 reservado a la página principal,
+ * h2 para títulos de sección por defecto. La prop `as` permite subirlo
+ * a h1 cuando la página no tiene h1 propio (ej. /acerca/equipo).
+ */
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+    eyebrow?: string;
+    title: string;
+    /** Tono del eyebrow (default sigue el fondo del padre). */
+    eyebrowTone?: 'default' | 'navy' | 'light';
+    /** Nivel de heading (default 'h2'). */
+    as?: 'h1' | 'h2' | 'h3';
+    id?: string;
+    class?: string;
+}
+
+const props = Astro.props as Props;
+const {
+    eyebrow,
+    title,
+    eyebrowTone,
+    as: Tag = 'h2',
+    id,
+    class: className = '',
+} = props;
+---
+
+<header class:list={['flex flex-col gap-3', className]}>
+    {eyebrow && <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>}
+    <Tag id={id} class="h-section">
+        {title}
+    </Tag>
+</header>

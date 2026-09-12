@@ -1,0 +1,77 @@
+---
+/**
+ * EventCard — tarjeta «PRÓXIMO EVENTO» de la p.7 del PDF.
+ *
+ * Primitiva de `ui/`: **no importa valores de `data/`** (ADENDA §A4).
+ * El contenido llega por props desde `ParticipationsOverview`.
+ *
+ * Geometría medida sobre la p.7 a 1920×1080 (escala 1:1, ver la nota de
+ * `ParticipationsOverview`):
+ *
+ *   tarjeta            515×427, borde de 2px navy-200, x 35..550, y 49..476
+ *   bloque de cabecera 204px de alto (12.75 u), padding lateral 31px
+ *   chip enmarcado     252×35, texto Arial Bold 17.33px
+ *   título             Segoe UI Bold 32.92px, 3 líneas, interlínea 38
+ *   bandas blancas     60px de alto con 12 de hueco, la última a 19 del borde
+ *
+ * **Tenía una segunda variante `navy` con CTA** para la sección
+ * `NextEvent` del home. Esa sección desapareció en D-153 —su tarjeta y su
+ * lista de competencias ya salían dentro del bloque de Participaciones,
+ * en la pantalla siguiente— y con ella la variante, que era código
+ * muerto (§A4: un concepto, un componente).
+ */
+import Eyebrow from './Eyebrow.astro';
+import DataRow from './DataRow.astro';
+
+interface Props {
+    /** Contenido de la tarjeta. Ver `data/content.participations.nextEvent`. */
+    event: {
+        eyebrow: string;
+        title: string;
+        rows: readonly { label: string; value: string }[];
+    };
+    /**
+     * Nivel del título de la tarjeta. Lo decide quien la coloca, para no
+     * saltarse niveles: `h2` cuando la diapositiva aporta el `h1` de la
+     * página, `h3` cuando la diapositiva ya es un `h2` (el home).
+     */
+    headingLevel?: 'h2' | 'h3';
+    class?: string;
+}
+
+const {
+    event: nextEvent,
+    headingLevel = 'h2',
+    class: className = '',
+} = Astro.props;
+const HeadingTag = headingLevel;
+---
+
+<article
+    class:list={[
+        'flex h-full flex-col border-[0.125em] border-navy-200 bg-transparent text-white',
+        className,
+    ]}
+    data-section="next-event-card"
+>
+    {/* En el lienzo el alto fijo de 12.75 u (204px) es lo que separa el
+      * título de la primera banda blanca, tal como en la p.7. Apilado no
+      * hay alto fijo, así que ese aire lo pone un padding inferior: sin
+      * él el título de tres líneas quedaba pegado a la banda. */}
+    <div class="flex flex-col items-start px-[1.9375em] pt-[1.9375em] pb-[1.25em] canvas:h-[12.75em] canvas:pb-0">
+        <Eyebrow
+            tone="navy"
+            class="event-card-eyebrow border-[0.125em] border-navy-200 px-[1.06em] py-[0.4em] leading-none text-white"
+        >{nextEvent.eyebrow}</Eyebrow>
+        <HeadingTag class="event-card-title mt-[0.5em] text-white">{nextEvent.title}</HeadingTag>
+    </div>
+
+    {/* Las bandas se alinean con los separadores de la lista de
+      * competencias del bloque de abajo: ambos arrancan a 1.9375em
+      * (31px del lienzo) del borde de su caja. */}
+    <dl class="flex flex-col gap-[0.75em] px-[1.9375em] pb-[1.1875em]">
+        {nextEvent.rows.map((row) => (
+            <DataRow label={row.label} value={row.value} />
+        ))}
+    </dl>
+</article>

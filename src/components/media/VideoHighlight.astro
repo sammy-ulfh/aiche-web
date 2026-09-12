@@ -1,0 +1,175 @@
+---
+/**
+ * VideoHighlight — panel 16:9 de video con overlay (p.6 del PDF).
+ *
+ * El PDF rotula esta caja «ESPACIO PARA EL VIDEO · 16:9» (texto oculto
+ * bajo la foto de muestra, recuperado en F4 con `mutool draw -F stext`),
+ * así que la proporción 16:9 es del diseño, no una decisión nuestra.
+ *
+ * Medidas del overlay sobre el lienzo de 1920×1080 (p.6):
+ *   chapa «HIGH LIGHTS»   211×47, esquina superior izquierda,
+ *                         borde de 1px, punto + Arial Bold 16px 0.30em
+ *   titular               Arial Bold 47.1px, abajo a la izquierda
+ *   bajada                Arial Italic 32.7px, dos líneas (interlínea 37)
+ *   chapa de fecha        195×37, esquina inferior derecha
+ *
+ * Los márgenes internos del overlay salen de la p.6 y escalan con el
+ * lienzo: 46px arriba, 48 a los lados y 35 abajo. La chapa de fecha se
+ * apoya en ese borde inferior; el titular queda 60px por encima, que es
+ * la diferencia medida entre ambos en el diseño.
+ *
+ * El video se monta como `LazyVideo` (RULES §11.2): no descarga nada
+ * hasta entrar al viewport, autoplay silenciado al llegar, pausa al
+ * salir, respeta `prefers-reduced-motion`.
+ */
+import LazyVideo from './LazyVideo.astro';
+import Badge from '../ui/Badge.astro';
+import type { VideoAsset } from '../../data/media';
+
+interface Props {
+    asset: VideoAsset;
+    /**
+     * `true` = el panel llena a su contenedor en vez de reservar una caja
+     * 16:9. Es lo que necesita la p.6, donde la foto sangra hasta los
+     * cuatro bordes de la diapositiva y el 16:9 lo aporta el recorte
+     * (`object-fit: cover`), no la caja.
+     */
+    fill?: boolean;
+    badge?: string;
+    title: string;
+    /** Texto en itálica debajo del título. */
+    caption: string;
+    chip?: string;
+    /**
+     * Nivel del heading interno. Default `h3`: el `VideoHighlight` se
+     * usa normalmente bajo un h2. Pasar `h2` cuando es el primer heading
+     * después del h1 de la página (p.ej. /acerca).
+     */
+    headingAs?: 'h2' | 'h3';
+    class?: string;
+}
+
+const {
+    asset,
+    fill = false,
+    badge = 'HIGH LIGHTS',
+    title,
+    caption,
+    chip,
+    headingAs = 'h3',
+    class: className = '',
+} = Astro.props;
+
+const HeadingTag = headingAs;
+---
+
+{/*
+  * **La caja se mide distinto en cada régimen (F6).**
+  *
+  * En el lienzo la caja la fija la composición: `h-full` cuando sangra
+  * (p.6) y 16:9 en el resto. Fuera del lienzo eso no funciona:
+  *   - `h-full` sobre un padre de altura automática colapsa a lo que
+  *     mida el contenido en flujo, y como el overlay iba en `absolute`
+  *     el contenido en flujo era **nada**. Medido en `/acerca` a 390px:
+  *     la caja quedaba en 219px, el titular y la bajada se salían por
+  *     abajo y aterrizaban **encima del footer**, en blanco sobre crema.
+  *   - 16:9 tampoco vale: a 390px de ancho son 219px de alto y el
+  *     bloque de rótulos necesita más.
+  *
+  * Solución: por debajo de `canvas` el overlay va en flujo normal y es
+  * él quien da la altura; el video se estira por detrás con
+  * `absolute inset-0`. La caja crece con el texto y no puede volver a
+  * desbordarse, que es lo que pide §A3 (crecer, nunca recortar).
+  */}
+<div
+    class:list={[
+        'relative isolate w-full min-h-[13rem]',
+        fill ? 'canvas:h-full' : 'canvas:aspect-video',
+        className,
+    ]}
+>
+    {/*
+      * El video va en su propia capa `absolute inset-0`, no con las
+      * clases pasadas a `LazyVideo`.
+      *
+      * `LazyVideo` lleva `relative` fijo en su propia lista de clases y
+      * `aspect-ratio` en el `style` inline, así que un `absolute` que
+      * llegue por `class` no gana: el `figure` seguía en flujo y, sin
+      * altura definida del padre, se quedaba en su 16:9 — 219px sobre
+      * una caja de 470 en `/acerca` a 390px de ancho, con la mitad
+      * inferior del rótulo sobre fondo desnudo (F6).
+      *
+      * El envoltorio tiene altura definida (la del padre) y NO crea
+      * contexto de apilamiento —position sin z-index—, así que el
+      * `z-10` del botón de play lo sigue elevando sobre el overlay.
+      */}
+    <div class="absolute inset-0 overflow-hidden">
+        <LazyVideo asset={asset} class="h-full w-full" />
+    </div>
+
+    {/* Velo inferior para que el titular se lea sobre cualquier fotograma.
+      *
+      * Las paradas no son decorativas, salen de medir (F7b): con el velo
+      * anterior (`transparent` → `navy-900/75` repartido por toda la
+      * altura) el titular caía a **3.98:1 de media y 1:1 sobre las batas
+      * blancas** del póster — invisible. Y es un **video**: el fotograma
+      * cambia, así que no vale calibrar contra la foto de hoy, hay que
+      * cubrir el peor caso posible, que es blanco puro.
+      *
+      * navy-900 al 70 % sobre blanco puro da 5.30:1, con margen sobre el
+      * 4.5 de AA. El velo llega a ese 70 % justo donde empieza la banda
+      * del texto (72 %) en lugar de al final, y sube a 88 % abajo, donde
+      * va la chapa de la fecha. Por encima del 40 % sigue transparente:
+      * la foto se ve entera. */}
+    <div
+        class="video-scrim pointer-events-none absolute inset-0"
+        aria-hidden="true"
+    ></div>
+
+    <div
+        class:list={[
+            /* En flujo por debajo de `canvas` (da la altura de la caja),
+             * superpuesto en el lienzo (la altura la da la composición). */
+            'relative flex flex-col justify-between gap-4 text-white',
+            'canvas:absolute canvas:inset-0',
+            /* Los márgenes del PDF (46/48/35px sobre el lienzo de 1920)
+             * sólo valen en el lienzo: en una columna de 360px se comen
+             * la cuarta parte del ancho. Por debajo de `canvas` el
+             * overlay usa un margen de 24px, que es el mismo gutter que
+             * el resto de la pila. */
+            'p-6',
+            fill
+                ? 'canvas:pt-[2.875em] canvas:pr-[3em] canvas:pb-[2.2em] canvas:pl-[3em]'
+                : 'canvas:p-[2.875em]',
+        ]}
+    >
+        {/* Chapa superior izquierda. */}
+        <div>
+            <Badge tone="light" dot>{badge}</Badge>
+        </div>
+
+        {/*
+          * Titular + bajada + chapa de fecha.
+          *
+          * En el lienzo van en una fila con la chapa pegada al borde
+          * derecho, como en la p.6. Apilados por debajo de `canvas`: la
+          * chapa mide 185px con su tracking y no encoge (`shrink-0`),
+          * así que en una fila de 264px útiles empujaba al titular fuera
+          * de la pantalla y provocaba scroll horizontal en `/` y en
+          * `/acerca` a 360 y 390px de ancho (medido en F6).
+          */}
+        <div class="flex min-w-0 flex-col items-start gap-3 canvas:flex-row canvas:items-end canvas:justify-between canvas:gap-6">
+            <div class:list={['flex min-w-0 flex-col gap-1', fill && 'canvas:mb-[3.75em]']}>
+                <HeadingTag class="font-ui h-card">{title}</HeadingTag>
+                {/* 2.04em son los 32.7px de la p.6 sobre el lienzo. En una
+                  * columna de 360px eso es más grande que el propio titular
+                  * de la pila (`h-card` baja a ~22px ahí), así que fuera del
+                  * lienzo la bajada vuelve al cuerpo base. */}
+                <p class="font-ui text-base italic leading-[1.35] text-white canvas:text-[2.04em] canvas:leading-[1.13]">
+                    {caption}
+                </p>
+            </div>
+            {chip && <Badge tone="light" class="max-w-full shrink-0">{chip}</Badge>}
+        </div>
+    </div>
+</div>

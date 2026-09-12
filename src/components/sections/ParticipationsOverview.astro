@@ -1,0 +1,145 @@
+---
+/**
+ * ParticipationsOverview — la p.7 del PDF en una sola pantalla.
+ *
+ * ── Escala 1:1 con el diseño ────────────────────────────────────────
+ * La diapositiva no lleva nav ni el margen de 96px del resto del sitio:
+ * su contenido va de **x=35 a x=1878** y de **y=49 a y=1052** sobre el
+ * lienzo de 1920×1080. F5 la metía dentro de la caja de 1728px del
+ * resto de páginas aplicando un factor de 1728/1843 = 0.938, y el
+ * resultado era una composición un **7 % más pequeña y centrada** que
+ * el diseño. Aquí la pantalla sangra hasta el borde y la composición va
+ * a **escala 1:1**: sólo se recorta el aire vertical, porque el
+ * contenido mide 1003px y el nav obligatorio deja 1000 (mismo criterio
+ * que `/acerca`, D-140).
+ *
+ * Geometría medida (píxeles del lienzo, ÷16 = unidades de `--screen-fs`):
+ *
+ *   margen izquierdo      35    (2.1875 u)
+ *   columna izquierda    515    (32.1875 u)  x 35..550
+ *   hueco entre columnas  39    (2.4375 u)
+ *   columna derecha     1289    (80.5625 u)  x 589..1878
+ *   margen derecho        42    (2.625 u)
+ *
+ *   tarjeta de evento    427 de alto (26.6875 u)  y 49..476
+ *   hueco                 21    (1.3125 u)
+ *   panel de competencias 552   (34.5 u)          y 499..1051
+ *
+ *   caja del título      161    (10.0625 u)       y 49..210
+ *   hueco                 24    (1.5 u)
+ *   subtítulo             60    (3.75 u)          y 234..294
+ *   hueco                 23    (1.4375 u)
+ *   media                732    (45.75 u)         y 320..1052
+ *
+ * Las dos columnas suman 62.5 u = 1000px exactos.
+ *
+ * ── Dónde vive ──────────────────────────────────────────────────────
+ * En `/participaciones` y, desde D-153, también en el home como tercera
+ * diapositiva. En el home `headingLevel="h2"`, porque el `h1` lo pone
+ * el hero (RULES §13).
+ */
+import Screen from '../ui/Screen.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import EventCard from '../ui/EventCard.astro';
+import CompetitionList from '../ui/CompetitionList.astro';
+import LazyVideo from '../media/LazyVideo.astro';
+import { participations } from '../../data/content';
+import { competitions, competitionsIntro } from '../../data/competitions';
+import { media } from '../../data/media';
+
+interface Props {
+    /** `h1` en su propia página; `h2` cuando va dentro del home. */
+    headingLevel?: 'h1' | 'h2';
+}
+
+const { headingLevel = 'h1' } = Astro.props as Props;
+const HeadingTag = headingLevel;
+const isPageTitle = headingLevel === 'h1';
+// Un `<section>` sin nombre accesible no se anuncia como región: el
+// `aria-labelledby` de `Screen` apunta siempre al titular de la pantalla
+// (RULES §13). Cuando la pantalla es el `h1` de la página el id es el
+// `page-title` que espera `<main aria-labelledby>`; si no, uno propio.
+const headingId = isPageTitle ? 'page-title' : 'participations-title';
+/** La tarjeta y el panel bajan un nivel para no saltarse ninguno. */
+const subHeading = isPageTitle ? 'h2' : 'h3';
+const PanelHeading = subHeading;
+const panelHeadingId = 'competitions-heading';
+---
+
+<Screen
+    tone="navy"
+    bleed
+    container={false}
+    align="start"
+    class="participations-screen p-0"
+    section="participations"
+    aria-labelledby={headingId}
+>
+    <GridBackdrop center="centered" />
+
+    <div
+        class="participations-layout relative flex flex-1 flex-col gap-8 px-6 py-12 canvas:grid canvas:grid-cols-[32.1875em_1fr] canvas:grid-rows-1 canvas:gap-[2.4375em] canvas:py-[2em] canvas:pr-0 canvas:pl-[2.1875em]"
+    >
+        {/* Columna derecha del diseño: título, bajada y media. */}
+        <div class="flex flex-col canvas:col-start-2 canvas:row-start-1">
+            <header
+                class="flex items-center justify-center border-[0.125em] border-navy-200 bg-navy px-4 text-center canvas:h-[10.0625em]"
+            >
+                <HeadingTag
+                    id={headingId}
+                    class="participations-title text-white"
+                >
+                    {participations.title}
+                </HeadingTag>
+            </header>
+
+            <p
+                class="participations-subtitle quote-serif mt-6 text-center text-white"
+            >
+                {participations.subtitle}
+            </p>
+
+            {/* El alto sigue en unidades del lienzo (`45.75em` = 732px del
+              * diseño): al escalar `--screen-fs` para dejar aire, escala
+              * con él y la columna cuadra sola. Con `flex-1` no funciona:
+              * la altura de la rejilla es automática, así que no hay nada
+              * que repartir y el `aspect-ratio` del `<figure>` vuelve a
+              * mandar. El media es ahora más ancho que en el PDF porque
+              * sangra hasta el borde; el recorte lo hace `cover`. */}
+            <LazyVideo
+                asset={media.participationsVideo}
+                class="participations-media mt-6 w-full canvas:h-[45.75em]"
+            />
+        </div>
+
+        {/* Columna izquierda del diseño: tarjeta de evento y competencias. */}
+        <div
+            class="flex flex-col gap-8 canvas:col-start-1 canvas:row-start-1 canvas:gap-[1.3125em]"
+        >
+            <div class="canvas:h-[26.6875em]">
+                <EventCard
+                    event={participations.nextEvent}
+                    headingLevel={subHeading}
+                />
+            </div>
+
+            <section
+                class="flex flex-col border-[0.125em] border-navy-200 px-[1.9375em] pt-[1.45em] pb-[1.1em] canvas:h-[34.5em]"
+                aria-labelledby={panelHeadingId}
+            >
+                <PanelHeading
+                    id={panelHeadingId}
+                    class="participations-panel-title text-white"
+                >
+                    {competitionsIntro.titleLines.map((line) => (
+                        <span class="block">{line}</span>
+                    ))}
+                </PanelHeading>
+                <p class="participations-panel-intro mt-[0.6em] text-white">
+                    {competitionsIntro.body}
+                </p>
+                <CompetitionList competitions={competitions} class="mt-[0.85em]" />
+            </section>
+        </div>
+    </div>
+</Screen>

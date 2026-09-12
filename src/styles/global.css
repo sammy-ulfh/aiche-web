@@ -1,0 +1,1304 @@
+/* ============================================================
+ * Sitio AIChE GDL — tokens del sistema de diseño
+ * Único archivo CSS global. No se permite escribir estilos
+ * sueltos en componentes: todo pasa por tokens (RULES §5).
+ * ============================================================
+ */
+
+/* **El escaneo se limita a `src/`.** Tailwind 4 detecta automáticamente
+ * las fuentes desde la raíz del proyecto, y eso incluía `docs/**` y
+ * `scripts/`: cada vez que una bitácora citaba una clase en prosa
+ * —`pt-20`, `border-t-4`, `min-h-screen`, `text-ink/55`…— Tailwind la
+ * emitía y viajaba en el CSS de las 7 páginas. Medido en F8: 99 clases
+ * fantasma, 694 B gz por ruta, y creciendo con cada sesión que se
+ * documenta. `source(none)` apaga la detección automática y `@source`
+ * la reabre sólo sobre `src/` (D-179). */
+@import "tailwindcss" source(none);
+@source "../";
+@import "@fontsource/libre-baskerville/latin-400-italic.css";
+
+/* ---------- Design tokens (RULES §5) ------------------------ */
+@theme {
+    /* Paleta exacta del PDF. Solo se permiten derivaciones de #123f72.
+     * Las cuatro últimas se midieron píxel a píxel sobre el PDF en F4
+     * (ver docs/DESIGN-SYSTEM.md §2 y la bitácora F4 §2). */
+    --color-navy-900: #0d2f57;
+    --color-navy: #123f72;
+    --color-navy-700: #1a4f8a;
+    /* Azul de acento del PDF (#2e86c8 medido en el bloque «Únete» de la
+     * p.1) **oscurecido un 10 %** para que el texto blanco de 15.6px en
+     * negrita llegue a AA. Con el color literal del diseño la relación es
+     * 3.93:1 y falla; con éste, 4.70:1. Se usa SOLO donde hay texto
+     * encima: `navy-500` sigue intacto en el degradado de `GridBackdrop`
+     * y en el subrayado de 3px del item activo, que no llevan texto.
+     * Medido en F7 (D-164, docs/PERFORMANCE.md §5.2). */
+    --color-navy-600: #2979b2;
+    --color-navy-500: #2e86c6;
+    --color-navy-400: #4a8fd4;
+    --color-navy-200: #8fc7ea;
+    --color-cream: #f4f1e9;
+    --color-ink: #000000;
+
+    /* Superficie del chrome (barra de navegación). Gris neutro medido en
+     * las páginas 10–14 del PDF, que son el lenguaje visual definitivo
+     * (RULES §4). No es crema: crema es más cálido y más claro. */
+    --color-chrome: #d0d4d7;
+    --color-chrome-ink: #0e2033;
+
+    /* Familias tipográficas.
+     * Segoe UI y Arial son de sistema → cero descargas.
+     * Libre Baskerville 400 italic es la única webfont (RULES §5.2).
+     *
+     * La pila NO lleva `system-ui`. Medido en F5b sobre las páginas 6-8
+     * del PDF (que sí traen capa de texto): donde no hay Segoe UI,
+     * `system-ui` resuelve a DejaVu Sans en Linux y ensancha el texto un
+     * **18,6 %** — "Tu patrocinio nos" ocupa 703px en vez de los 595 del
+     * diseño. Arial (Liberation Sans, métricamente compatible) se queda
+     * en +2,7 % de media y en ±1,5 % en los cuerpos de texto. Arial es la
+     * tipografía terciaria que ya autoriza RULES §5.2. Ver D-137. */
+    --font-sans: "Segoe UI", Arial, Helvetica, sans-serif;
+    --font-serif: "Libre Baskerville", Georgia, "Times New Roman", serif;
+    --font-ui: Arial, Helvetica, sans-serif;
+
+    /* Radio y bordes: el diseño es rectilíneo (RULES §5.3). */
+    --radius-xs: 0;
+    --radius-sm: 0.125rem;
+    --radius-md: 0.25rem;
+
+    /* Shadows — derivaciones de navy con alpha.
+     * Genera automáticamente las utilities `shadow-card`, etc. */
+    --shadow-card: 0 1px 0 rgb(18 63 114 / 0.15);
+
+    /* ---------- Frontera del lienzo (F6) ------------------------- *
+     * `canvas:` es el ÚNICO breakpoint que decide entre las dos
+     * composiciones del sitio: la diapositiva 16:9 del PDF y la pila de
+     * una columna. Se sitúa en 80rem = 1280px, y el número está medido,
+     * no elegido por costumbre:
+     *
+     *   El lienzo son 108 unidades de contenido + 6 de margen a cada
+     *   lado = 120 unidades de `--screen-fs`. La escala vale
+     *   `0.833vw` mientras no toque el suelo del `clamp()` (0.62rem =
+     *   9.92px), y 120 × 0.00833 × ancho ≈ el ancho entero: encaja
+     *   justo. Pero por debajo de 1191px (= 9.92 / 0.00833) manda el
+     *   suelo, la escala deja de seguir al viewport y el lienzo pide
+     *   120 × 9.92 = 1190px **haya el ancho que haya**. De ahí para
+     *   abajo la diapositiva no cabe: o desborda a lo ancho o hay que
+     *   bajar el cuerpo del texto a 7-9px. Las dos cosas se midieron en
+     *   F6 a 768×1024 y 1024×768 (docs/sessions/F6-responsive.md §2).
+     *
+     * 1280px es el primer valor redondo por encima de ese límite y es
+     * además la resolución más pequeña que ADENDA §A3 obliga a
+     * verificar con lienzo (1280×720). Por debajo manda la legibilidad:
+     * una columna, escala normal del navegador, nav de hamburguesa.
+     *
+     * Los breakpoints `sm:` (40rem) siguen disponibles para los ajustes
+     * de detalle DENTRO de la pila; `md:`/`lg:`/`xl:` no se usan en el
+     * proyecto, para que no haya dos formas de decir lo mismo. */
+    --breakpoint-canvas: 80rem;
+}
+
+/* ---------- Base ------------------------------------------- */
+@layer base {
+    html {
+        /* Compensa el nav sticky en anclas (RULES §7.6). */
+        scroll-behavior: smooth;
+        scroll-padding-top: 5rem;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        color: var(--color-ink);
+        background: var(--color-cream);
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        /* Ninguna palabra puede romper la composición (F6).
+         *
+         * El copy de hoy es corto y cabe, pero el sitio es de una
+         * organización real: un nombre de patrocinador, una URL o un
+         * término químico largo acabarán entrando por `data/`. Medido en
+         * F6 con los textos triplicados y una palabra inseparable de 40
+         * caracteres, el sitio se iba a **2030px de ancho sobre un
+         * viewport de 1440** y a 843 sobre 390.
+         *
+         * `anywhere` y no `break-word` a propósito: sólo `anywhere`
+         * reduce el tamaño **min-content** de la caja, que es lo que
+         * usan flex y grid para decidir cuánto puede encoger un hijo.
+         * Con `break-word` la palabra se parte visualmente pero la caja
+         * sigue reservando el ancho de la palabra entera y el
+         * desbordamiento no desaparece.
+         *
+         * Sólo actúa cuando la palabra no cabe: con el copy actual no
+         * cambia ni un salto de línea (verificado contra el PDF a
+         * 1920×1080 después del cambio). */
+        overflow-wrap: anywhere;
+    }
+
+    /* Foco accesible siempre visible (RULES §13).
+     * navy-700 sobre el fondo crema por defecto (contraste 7.36:1 — pasa
+     * el 3:1 para indicadores de UI). Los componentes sobre fondo oscuro
+     * (Nav, MobileMenu, etc.) lo sobreescriben con outline-cream
+     * (9.4:1 sobre navy). Antes era navy-400 (2.5:1 sobre cream) que
+     * fallaba el umbral de 3:1 — cambio aplicado en S8. */
+    :focus-visible {
+        outline: 2px solid var(--color-navy-700);
+        outline-offset: 2px;
+    }
+
+    /* Respeta reduced-motion globalmente (RULES §13). */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+
+    /* Impresión: la página de patrocinios se imprime a PDF para
+     * empresas (RULES §6 S6 — criterio de aceptación). Estas reglas
+     * son globales: ocultan el chrome, fijan el fondo y evitan cortes
+     * horribles. No afecta al resto del sitio en pantalla. */
+    @media print {
+        :root {
+            --color-cream: #ffffff;
+        }
+
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-size: 11pt;
+        }
+
+        /* Chrome del sitio fuera del PDF. */
+        header,
+        footer,
+        nav,
+        [data-skip-link],
+        .mobile-menu,
+        .nav-dropdown {
+            display: none !important;
+        }
+
+        /* Reset de padding del main para que el contenido llegue al
+         * borde del papel. */
+        main {
+            padding: 0 !important;
+        }
+
+        /* Las secciones no agregan padding vertical extra. */
+        section {
+            padding: 0.75rem 0 !important;
+            page-break-inside: auto;
+        }
+
+        /* El GridBackdrop sólo aporta ruido al impreso: lo apagamos. */
+        [data-grid-backdrop] {
+            display: none !important;
+        }
+
+        /* Las secciones con fondo navy se imprimen en blanco con
+         * texto navy, evitando un rectángulo negro que consume tóner
+         * y mantiene el contraste para el texto. */
+        section.bg-navy {
+            background: #ffffff !important;
+            color: var(--color-navy) !important;
+        }
+        section.bg-navy .text-white,
+        section.bg-navy .text-white\/90,
+        section.bg-navy .text-white\/85,
+        section.bg-navy .text-white\/80,
+        section.bg-navy .text-white\/70,
+        section.bg-navy .text-white\/60 {
+            color: var(--color-navy) !important;
+        }
+        section.bg-navy .text-navy-400 {
+            color: var(--color-navy) !important;
+        }
+        section.bg-navy .bg-navy-900 {
+            background: #f4f1e9 !important;
+        }
+
+        /* Mantener una jerarquía de tamaño razonable. */
+        .h-hero { font-size: 28pt !important; }
+        .h-display { font-size: 24pt !important; }
+        .h-section { font-size: 18pt !important; }
+        .h-page { font-size: 18pt !important; }
+        .h-card { font-size: 14pt !important; }
+        .h-card-sm { font-size: 12pt !important; }
+
+        /* Evita que las tarjetas se corten entre páginas. */
+        .print-card,
+        section.card,
+        ol > li {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+        /* Los enlaces deben ser visibles en papel. */
+        a {
+            color: var(--color-navy) !important;
+            text-decoration: underline !important;
+        }
+
+        /* Imágenes a tamaño natural. */
+        img {
+            max-height: 60vh !important;
+        }
+
+        /* El hero de patrocinadores debe caber en una sola página. */
+        section.print-hero {
+            page-break-after: always;
+        }
+
+        /* El estado post-evento del contador no aplica en impresión. */
+        [data-countdown] {
+            display: none !important;
+        }
+    }
+}
+
+/* ============================================================
+ * SISTEMA DE PANTALLA (ADENDA §A3)
+ *
+ * El lienzo de diseño es 1920×1080. Una diapositiva del PDF = una
+ * pantalla. Todo lo de dentro de `.screen` escala en bloque con un
+ * único factor, así que la composición se mantiene idéntica a
+ * cualquier resolución: sólo cambia el tamaño.
+ *
+ * ── Por qué NO se usa `em` literalmente ─────────────────────────────
+ * §A3 dice "todo lo de dentro se expresa en `em`". La intención es
+ * escalar en bloque, pero `em` **no** sirve para conseguirlo aquí:
+ * las custom properties se resuelven en el elemento que las USA, no
+ * donde se declaran. Con `--spacing: 0.25em`, un `.py-20` sobre un
+ * elemento `text-4xl` daría `calc(0.25em * 20)` relativo a **su propio**
+ * font-size, no al de la pantalla: el espaciado se dispararía en los
+ * títulos y se quedaría corto en los pies de foto.
+ *
+ * La solución que sí escala en bloque es derivar todo de una longitud
+ * **absoluta** calculada una vez: `--screen-fs`. Al no depender del
+ * font-size de ningún elemento, `calc()` sobre ella da el mismo
+ * resultado en toda la pantalla. Es el mismo efecto que persigue §A3,
+ * por el único mecanismo que lo consigue de verdad.
+ * ============================================================ */
+
+:root {
+    /* Alto del nav: es la única chrome fija del sitio y se resta del
+     * alto disponible de cada pantalla. Se declara aquí para que Nav y
+     * Screen no puedan desincronizarse. */
+    --nav-h: 5rem; /* 80px medidos en las páginas 10-14 del PDF (F4) */
+
+    /* Alto realmente disponible para una diapositiva: el nav es sticky
+     * y tapa la franja superior siempre. */
+    --screen-h: calc(100svh - var(--nav-h));
+
+    /* Alto del footer crema: 192px sobre el lienzo de 1920 (p.9 del PDF,
+     * banda crema de y=833 a y=1024). Es chrome, no lienzo: no escala. */
+    --footer-h: 12rem;
+
+    /* Factor de escala del lienzo.
+     *
+     * §A3 propone: clamp(0.72rem, min(0.833vw, 1.481vh), 1.15rem).
+     * Se ajusta en dos puntos, medidos y justificados en
+     * docs/sessions/F2-screen-system.md §3:
+     *
+     *  1. El término vertical usa `--screen-h`, no `100svh`. La
+     *     diapositiva tiene que caber en lo que deja el nav, no en el
+     *     viewport entero.
+     *     El coeficiente es 16/1000 = 0.016, no 16/1080: sobre el lienzo
+     *     de 1920×1080 el nav ocupa los 80px de arriba (medidos en F4) y
+     *     a la diapositiva le quedan 1000px. Con 16/1080 la escala salía
+     *     a 14.8px en vez de 16 y toda la página se quedaba un 7.5 %
+     *     corta — se veía en la primera comparación de F4.
+     *  2. El suelo baja de 0.72rem a 0.62rem. Con 0.72rem el mínimo se
+     *     activaba a 1366×768 y la pantalla desbordaba ~10 %: el suelo
+     *     impedía justo el caso que más importa. Con 0.62rem, 1366×768
+     *     cabe sin recortar. La legibilidad del texto pequeño no se
+     *     sacrifica: se protege abajo, en `--text-xs`/`--text-sm`, que
+     *     llevan su propio mínimo absoluto.
+     *
+     * `min()` hace que mande la dimensión que se queda corta;
+     * `clamp()` evita texto ilegible en pantallas diminutas o gigantes.
+     */
+    --screen-fs: clamp(
+        0.62rem,
+        min(0.833vw, calc(var(--screen-h) * 0.016)),
+        1.15rem
+    );
+}
+
+/* Régimen apilado: `--screen-fs` vuelve a la base del navegador.
+ *
+ * Va aquí, SIN capa y justo después del `:root` que declara el token,
+ * a propósito: dentro de `@layer components` esta regla perdería contra
+ * el `:root` de arriba, que no está en ninguna capa — el CSS sin capa
+ * gana siempre al CSS en capa, por muy específico que sea el selector.
+ * Es exactamente el error que se cometió al escribirlo la primera vez
+ * en F6, y por eso los textos seguían a 7.9px después del cambio.
+ *
+ * Alcanza a TODO: las `.screen` (que hacen `font-size: var(--screen-fs)`)
+ * y también el nav y el footer, que viven fuera de cualquier pantalla y
+ * usan las mismas utilidades `.t-*` con el fallback del `var()`. */
+@media not all and (min-width: 80rem) {
+    :root {
+        --screen-fs: 1rem;
+    }
+}
+
+@layer components {
+    .screen {
+        /* Base del bloque. Todo lo de dentro se deriva de aquí. */
+        font-size: var(--screen-fs);
+
+        /* Una diapositiva = una pantalla. `min-height`, nunca `height`:
+         * es la válvula de escape de §A3. Si el contenido no cabe ni al
+         * mínimo de escala, la sección CRECE y el scroll fluye. Cortar
+         * contenido está prohibido, y por eso aquí no hay ningún
+         * `overflow: hidden`. */
+        min-height: var(--screen-h);
+
+        /* Aire vertical mínimo del lienzo (8px sobre 1920). Escala en
+         * bloque como todo lo demás; antes era `py-12 md:py-16` fijo en
+         * el componente, sin relación con el alto de la pantalla.
+         * Es deliberadamente pequeño (8px sobre 1920): las diapositivas
+         * del PDF llegan casi al borde —la p.6 ocupa 990 de los 1080px y
+         * al añadirle el nav sólo sobran 10— y el aire de cada
+         * composición lo pone la propia sección, no la pantalla. */
+        padding-block: calc(var(--screen-fs) * 0.5);
+
+        /* Redefinición de la escala de Tailwind en unidades derivadas de
+         * `--screen-fs`. Como las utilidades se emiten siempre como
+         * `calc(var(--spacing) * N)` y `var(--text-*)`, basta con esto
+         * para que `py-20`, `gap-6`, `text-lg`, `max-w-2xl`, etc.
+         * escalen en bloque sin reescribir ni una clase. */
+        --spacing: calc(var(--screen-fs) * 0.25);
+
+        --text-xs: max(0.6875rem, calc(var(--screen-fs) * 0.75));
+        --text-sm: max(0.75rem, calc(var(--screen-fs) * 0.875));
+        --text-base: var(--screen-fs);
+        --text-lg: calc(var(--screen-fs) * 1.125);
+        --text-xl: calc(var(--screen-fs) * 1.25);
+        --text-2xl: calc(var(--screen-fs) * 1.5);
+        --text-3xl: calc(var(--screen-fs) * 1.875);
+        --text-4xl: calc(var(--screen-fs) * 2.25);
+        --text-5xl: calc(var(--screen-fs) * 3);
+        --text-6xl: calc(var(--screen-fs) * 3.75);
+        --text-7xl: calc(var(--screen-fs) * 4.5);
+
+        /* Anchos de medida: también son parte del lienzo. */
+        --container-xs: calc(var(--screen-fs) * 20);
+        --container-sm: calc(var(--screen-fs) * 24);
+        --container-md: calc(var(--screen-fs) * 28);
+        --container-lg: calc(var(--screen-fs) * 32);
+        --container-xl: calc(var(--screen-fs) * 36);
+        --container-2xl: calc(var(--screen-fs) * 42);
+        --container-3xl: calc(var(--screen-fs) * 48);
+        --container-4xl: calc(var(--screen-fs) * 56);
+        --container-5xl: calc(var(--screen-fs) * 64);
+        --container-6xl: calc(var(--screen-fs) * 72);
+        --container-7xl: calc(var(--screen-fs) * 80);
+        /* `max-w-prose` NO pasa por un token de contenedor: Tailwind lo emite
+         * como `65ch`, que ya es relativo al font-size y por tanto escala
+         * solo con la pantalla. Definir `--container-prose` aquí era código
+         * muerto (F2); se retiró en F3. */
+
+        /* Ancho del lienzo. Medido en F4 sobre las páginas 10-14 del PDF:
+         * el contenido arranca en x=96 y termina en x=1826, es decir
+         * 1728px de caja con 96px de margen a cada lado sobre 1920.
+         * 1728 / 16 = 108 unidades base; 96 / 16 = 6.
+         * Antes era 90 (1440px), que dejaba 240px muertos a cada lado y
+         * era la desviación S-2 de docs/AUDIT-F2.md. */
+        --screen-canvas: calc(var(--screen-fs) * 108);
+        --screen-gutter: calc(var(--screen-fs) * 6);
+    }
+
+    /* Contenedor centrado del contenido de una pantalla. */
+    .screen-canvas {
+        margin-inline: auto;
+        width: 100%;
+        max-width: var(--screen-canvas);
+    }
+
+    /* Margen lateral del lienzo: 96px sobre 1920 (medido en F4 en las
+     * páginas 10-14 del PDF; el contenido va de x=96 a x=1826). */
+    .screen-gutter {
+        padding-inline: var(--screen-gutter);
+    }
+
+    /* En la p.9 del PDF el bloque "¡Súmate al capítulo!" y el footer
+     * crema **comparten diapositiva**: el bloque mide 751px, el footer
+     * 192px, y juntos llenan la pantalla. Es la única diapositiva del
+     * PDF que incluye el footer, así que la regla se limita a ella: si
+     * se aplicase a cualquier última sección, las diapositivas que sí
+     * ocupan la pantalla entera (p.6, p.13) se quedarían 192px cortas.
+     *
+     * En el resto de páginas el footer va debajo de la última pantalla y
+     * se llega a él con un scroll corto, que es lo que corresponde: la
+     * diapositiva sigue ocupando una pantalla completa (§A3).
+     *
+     * `--footer-h` la declara el propio Footer, así que las dos medidas
+     * no pueden desincronizarse (mismo criterio que `--nav-h` y el Nav). */
+    main > section.screen[data-section='join-cta']:last-of-type {
+        min-height: calc(var(--screen-h) - var(--footer-h));
+    }
+
+    @media not all and (min-width: 80rem) {
+        main > section.screen[data-section='join-cta']:last-of-type {
+            min-height: 0;
+        }
+    }
+
+    /* ---------- Régimen apilado (por debajo de `canvas`) ---------- *
+     * Por debajo de 80rem la diapositiva 16:9 no cabe (ver el comentario
+     * de `--breakpoint-canvas` en `@theme`): la composición pasa a una
+     * columna y manda la legibilidad, no el encaje en una pantalla
+     * apaisada.
+     *
+     * **F6: la única palanca es `--screen-fs`.** Antes este bloque
+     * redefinía `font-size` sobre `.screen` y luego repetía a mano toda
+     * la escala `--text-*` / `--container-*` / `--spacing`. El fallo
+     * estaba en que las **utilidades del diseño** (`.t-tag`, `.t-body`,
+     * `.h-section`, `.contact-value`, `.about-copy`…) no se derivan de
+     * `--text-*` sino de `calc(var(--screen-fs) * k)`, y `--screen-fs`
+     * seguía valiendo lo que dijera el `clamp()` — o sea, su suelo de
+     * 9.92px. Resultado medido en F6: «PAQUETE 1» a **7.9px** y las
+     * etiquetas FECHA/SEDE/UBICACIÓN a **8.9px** en móvil y en tablet,
+     * porque nadie las había listado en la lista de excepciones.
+     *
+     * Redefinir `--screen-fs` en `:root` arregla la clase entera de una
+     * vez y de paso alcanza al nav y al footer, que están FUERA de
+     * cualquier `.screen` y por eso pintaban su eyebrow a 9.7px. Los
+     * `--text-*` y `--container-*` de `.screen` ya se derivan de
+     * `--screen-fs`, así que con 1rem reproducen exactamente la escala
+     * por defecto de Tailwind y no hace falta repetirlos. */
+    @media not all and (min-width: 80rem) {
+        .screen {
+            /* La altura deja de ser una restricción: es la pila la que
+             * manda y el scroll fluye (válvula de escape de §A3). */
+            min-height: 0;
+
+            /* Medida cómoda: a 1279px una sola columna a ancho completo
+             * daría líneas de ~1230px, muy por encima de cualquier
+             * medida legible. 52rem (832px) es el techo; por debajo de
+             * eso el contenedor sigue siendo fluido. */
+            --screen-canvas: 52rem;
+            --screen-gutter: 1.5rem;
+        }
+    }
+}
+
+/* ---------- Reveal: mejora progresiva (ADENDA §A2) ---------- *
+ * El estado por defecto de `[data-reveal]` es VISIBLE. Estas reglas son
+ * lo único que oculta, y exigen DOS condiciones a la vez:
+ *
+ *   1. `html.js-reveal` — la pone el script inline del <head> de
+ *      Layout.astro. Sin JS no existe, y su temporizador de hombre
+ *      muerto la retira si `reveal.ts` no llega a tomar el control.
+ *   2. `prefers-reduced-motion: no-preference` — con `reduce` no se
+ *      oculta nada en ningún momento.
+ *
+ * Cualquier fallo (JS desactivado, error de red, excepción, navegador
+ * sin IntersectionObserver) deja el contenido a la vista. Esta es la
+ * corrección de la causa raíz de docs/AUDIT-F2.md §1.
+ */
+@layer components {
+    @media (prefers-reduced-motion: no-preference) {
+        html.js-reveal [data-reveal] {
+            transition:
+                opacity 600ms cubic-bezier(0, 0, 0.2, 1),
+                transform 600ms cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        html.js-reveal [data-reveal]:not(.is-revealed) {
+            opacity: 0;
+            transform: translateY(1rem);
+        }
+
+        /* Lo que ya estaba en el viewport al cargar entra sin animación:
+         * el usuario no ve un fundido sobre contenido que ya miraba. */
+        html.js-reveal [data-reveal].is-revealed-instant {
+            transition: none;
+        }
+    }
+
+    /* ---------- Submenú de escritorio (F5b) ----------------------- *
+     * Los tres items con subpáginas son enlaces directos: pulsarlos
+     * lleva a su página y por eso ya no llevan el «+» del PDF. El panel
+     * de hijos se abre solo, sin JavaScript, cuando el ratón entra en el
+     * item o cuando el foco de teclado cae dentro de él. `:focus-within`
+     * cubre también al propio enlace padre, así que al tabular hasta él
+     * el panel aparece y sus hijos entran en el orden natural de
+     * tabulación (RULES §7.2).
+     *
+     * `display: none` saca el panel del árbol de accesibilidad y del orden de
+     * tabulación mientras está cerrado, así que no hace falta nada más. */
+    .nav-submenu {
+        display: none;
+    }
+
+    [data-dropdown]:hover > .nav-submenu,
+    [data-dropdown]:focus-within > .nav-submenu {
+        display: block;
+    }
+
+    /* ---------- Panel del menú móvil (RULES §7.3) ----------------- *
+     * El panel se controla con `data-open`, que es lo que conmuta
+     * `scripts/nav.ts`. Antes el marcado llevaba además la clase
+     * `hidden` de Tailwind de forma permanente y no existía ninguna
+     * regla para `data-open`: el panel no se abría nunca (F1).
+     */
+    [data-mobile-panel] {
+        display: none;
+    }
+
+    [data-mobile-panel][data-open='true'] {
+        display: flex;
+    }
+
+    /* En escritorio el panel no existe, se abra o no el estado. */
+    @media (min-width: 80rem) {
+        [data-mobile-panel],
+        [data-mobile-panel][data-open='true'] {
+            display: none;
+        }
+    }
+}
+
+/* ---------- Utilidades semánticas (RULES §5.2) ------------- */
+@layer utilities {
+    /* Etiqueta corta en Arial, mayúsculas, tracking amplio.
+     * Usado en FECHA · SEDE · UBICACIÓN · TRES PAQUETES, etc. */
+    .eyebrow {
+        font-family: var(--font-ui);
+        font-weight: 700;
+        text-transform: uppercase;
+        /* 0.30em medido en F4: "F A L T A N" ocupa 85.7px a 15.6px de
+         * Arial Bold, cuando su ancho natural es 62.4px → 4.66px de
+         * tracking por hueco. Lo mismo da "ACERCA DE NOSOTROS" en la
+         * p.13. Antes era 0.18em. */
+        letter-spacing: 0.3em;
+    }
+
+    /* Variante estrecha: las unidades del contador (DÍAS/HORAS/MIN/SEG)
+     * y la bajada del nav van a 0.24em y 0.14em respectivamente. */
+    .eyebrow-unit { letter-spacing: 0.24em; }
+    .eyebrow-tagline { letter-spacing: 0.14em; }
+
+    /* Cita en Libre Baskerville italic (subtítulos decorativos). */
+    .quote-serif {
+        font-family: var(--font-serif);
+        font-style: italic;
+    }
+
+    /* Dígitos monoespaciados: el contador no salta de ancho
+     * al actualizarse cada segundo (RULES §15). */
+    .stat-num {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum";
+    }
+
+    /* Escala tipográfica única (RULES §5.4, ADENDA §A3).
+     *
+     * Los multiplicadores NO son los de una escala tipográfica genérica:
+     * son los tamaños medidos sobre `design/landing.pdf` rasterizado a
+     * 1920×1080, divididos por la base de 16px del lienzo. Las páginas
+     * 1-9 son vectoriales y dan el tamaño exacto (`mutool draw -F stext`);
+     * las 10-14 son mapas de bits y se midieron por altura de caja alta
+     * (cap-height / 0.702 para Segoe UI Bold).
+     *
+     *   .h-hero    105.4px  p.1  "AIChE GDL / Capítulo estudiantil"
+     *   .h-display  84px    p.14 "¡TRABAJEMOS JUNTOS!"
+     *   .h-section  74px    p.6  "Acerca de Nosotros"  (p.10: 73px)
+     *   .h-page     56px    p.13 "Conoce a nuestra mesa directiva…"
+     *   .h-card     47.1px  p.6  "Así se vive la experiencia AIChE GDL"
+     *   .h-card-sm  32.7px  p.6  bajada del video
+     *
+     * Antes la escala era 5.25 / 3 / 2 / 1.5, inventada, y todos los
+     * títulos salían pequeños (desviación S-4 de docs/AUDIT-F2.md).
+     *
+     * Fuera de una `.screen` (nav, footer) `--screen-fs` no está definida
+     * y el `var()` cae al valor de reserva de 16px.
+     */
+    .h-hero {
+        font-size: calc(var(--screen-fs, 1rem) * 6.5875);
+        /* 111px de interlínea sobre 105.4px de cuerpo (p.1). */
+        line-height: 1.053;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .h-display {
+        font-size: calc(var(--screen-fs, 1rem) * 5.25);
+        line-height: 1.07;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .h-section {
+        font-size: calc(var(--screen-fs, 1rem) * 4.625);
+        /* 65px de interlínea sobre 74px de cuerpo (p.6): el título de
+         * sección va deliberadamente apretado en el diseño. */
+        line-height: 0.89;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .h-page {
+        font-size: calc(var(--screen-fs, 1rem) * 3.5);
+        line-height: 1.1;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .h-card {
+        font-size: calc(var(--screen-fs, 1rem) * 2.94);
+        line-height: 1.15;
+        font-weight: 700;
+    }
+    .h-card-sm {
+        font-size: calc(var(--screen-fs, 1rem) * 2.04);
+        line-height: 1.13;
+        font-weight: 700;
+    }
+
+    /* Tamaños de texto no titular, también medidos sobre el PDF a
+     * 1920×1080. Existen como utilidad propia porque no caen en ningún
+     * escalón de la escala de Tailwind: son cifras del diseño.
+     *
+     *   .t-lead     21.3px  p.1  párrafo del hero (interlínea 33px)
+     *   .t-body     23.9px  p.6  cuerpo justificado (interlínea 27.9px)
+     *   .t-quote    36.9px  p.6  pregunta en Libre Baskerville italic
+     *   .t-num      67.1px  p.1  cifras del contador
+     *   .t-eyebrow  15.6px  p.1  FALTAN / ¡PARA NUESTRA…! y eyebrows
+     *   .t-label    14.4px  p.1  DÍAS / HORAS / MIN / SEG
+     */
+    .t-lead {
+        font-size: calc(var(--screen-fs, 1rem) * 1.33);
+        line-height: 1.549;
+    }
+    .t-body {
+        font-size: calc(var(--screen-fs, 1rem) * 1.494);
+        line-height: 1.167;
+    }
+    .t-quote {
+        font-size: calc(var(--screen-fs, 1rem) * 2.306);
+        line-height: 1.003;
+    }
+    .t-num {
+        font-size: calc(var(--screen-fs, 1rem) * 4.194);
+        line-height: 1;
+    }
+    /* Las tres etiquetas llevan SUELO ABSOLUTO de 11px, igual que
+     * `--text-xs` / `--text-sm`.
+     *
+     * Motivo (medido en F6): el escalado en bloque de §A3 las arrastra
+     * hacia abajo con toda la diapositiva, y a 1366×768 —donde manda el
+     * término vertical de la escala, 11.01px— «FECHA», «CORREO» o
+     * «MESA DIRECTIVA» caían a 9.9px, y «PAQUETE 1» a 8.8px. Son
+     * mayúsculas de Arial con 0.30em de tracking: a ese cuerpo dejan de
+     * leerse. El cuerpo de texto no tiene el problema (`.t-body` se
+     * queda en 16.4px a esa misma resolución); son las etiquetas, que ya
+     * parten de 14.4px en el lienzo, las que se quedan sin margen.
+     *
+     * El suelo **no toca la fidelidad**: a 1920×1080, que es el lienzo de
+     * referencia de §A1, los tres valores nominales (15.6 / 14.4 / 12.8px)
+     * están por encima de 11px y el `max()` no interviene. Sólo actúa al
+     * reducir la escala, que es justo donde el diseño ya no manda. */
+    .t-eyebrow {
+        font-size: max(0.6875rem, calc(var(--screen-fs, 1rem) * 0.975));
+    }
+    .t-label {
+        font-size: max(0.6875rem, calc(var(--screen-fs, 1rem) * 0.9));
+    }
+    /* Etiqueta de tarjeta de paquete (PAQUETE N · N BENEFICIOS). Es más
+     * pequeña que `.t-label`: en el PDF "PAQUETE 1" mide 94px en la p.10
+     * y 106px en la p.11, frente a los 161px de "TRES PAQUETES". A 0.8
+     * unidades con el tracking de `.eyebrow` sale a 100 y 101 — dentro
+     * del ±6 % en las dos, frente al +20 % que daba `.t-label`. */
+    .t-tag {
+        font-size: max(0.6875rem, calc(var(--screen-fs, 1rem) * 0.8));
+    }
+
+    /* Velo de legibilidad del overlay de video (F7b, D-178). Las paradas
+     * están en `docs/PERFORMANCE.md` §5.2 y en el propio componente. */
+    .video-scrim {
+        background: linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--color-navy-900) 25%, transparent) 0%,
+            transparent 40%,
+            color-mix(in srgb, var(--color-navy-900) 70%, transparent) 72%,
+            color-mix(in srgb, var(--color-navy-900) 88%, transparent) 100%
+        );
+    }
+
+    /* ---------- `/acerca`, p.6 ------------------------------------ *
+     * La diapositiva ocupa los 1000px que deja el nav obligatorio, así
+     * que no hereda los 8px de aire vertical genérico de `Screen` en
+     * escritorio: los necesita para el cuerpo de 20 líneas.
+     *
+     * La pila tipográfica localizada que tenía `.about-copy` pasó a
+     * `--font-sans` en F5b: el problema no era de `/acerca`, era de
+     * todo el sitio (D-137).
+     *
+     * Columna de texto: x 40..542 sobre el lienzo de 1920 → margen de
+     * 2.5 unidades y ancho de 31.375. Ojo: **no** usa el margen de 96px
+     * del resto de páginas, porque la p.6 no lo tiene.
+     *
+     * Título: 22.6 unidades (362px) de medida, que es lo que separa
+     * x=180 de x=542. Con Segoe UI «Acerca de» mide 327px y con Arial
+     * 354; en ambos casos el corte cae donde el diseño (dos líneas). */
+    @media (min-width: 80rem) {
+        .screen.about-screen {
+            /* **La p.6 compone los 1080px del lienzo, no los 1000 que deja
+             * el nav.** Medido sobre la página rasterizada: 61px de margen
+             * superior, 985 de contenido (el titular, la caja de la
+             * pregunta y la del cuerpo) y 34 de margen inferior.
+             *
+             * Hasta F7b la diapositiva se pintaba a 1:1 y el desajuste se
+             * pagaba borrando ese aire: el titular arrancaba a 16px del
+             * borde y el cuerpo **se salía 13px por abajo**. Es lo que se
+             * veía «muy ajustado».
+             *
+             * Ahora la pantalla declara cuántas unidades de lienzo mide su
+             * composición —67.5, o sea 1080/16— y `--screen-fs` se deriva
+             * de ahí. Al sobreescribirlo en el mismo elemento que declara
+             * `--spacing`, `--text-*` y `--container-*`, la diapositiva
+             * entera escala en bloque: tipografía, huecos, ancho de la
+             * columna de texto y el `36em` de la rejilla (D-176).
+             *
+             * **68.25 y no 67.5**, que es lo que suman las medidas del PDF:
+             * nuestra columna compone 997px donde el diseño pone 985. Los
+             * 12px de más son de la pila tipográfica —Arial en lugar de la
+             * Segoe UI del PDF, con las 20 líneas justificadas del cuerpo
+             * (D-137)— y con 67.5 la pantalla se pasaba 11px. El divisor
+             * sale de medir el render, no de sumar el diseño. Si el copy
+             * cambia, `min-height` sigue siendo la válvula de escape: la
+             * pantalla crece, nunca recorta (§A3). */
+            --screen-fs: clamp(
+                0.62rem,
+                min(0.833vw, calc(var(--screen-h) / 68.25)),
+                1.15rem
+            );
+
+            /* El aire lo pone la columna de texto, no la pantalla: la foto
+             * sangra por arriba, por abajo y por la derecha, y un
+             * `padding-block` aquí la despegaría de los bordes. */
+            padding-block: 0;
+        }
+        .about-copy {
+            padding-block: calc(var(--screen-fs, 1rem) * 3.8125)
+                calc(var(--screen-fs, 1rem) * 2.125);
+        }
+    }
+    .about-copy {
+        width: calc(var(--screen-fs, 1rem) * 31.375);
+        margin-left: calc(var(--screen-fs, 1rem) * 2.5);
+    }
+    .about-title {
+        max-width: calc(var(--screen-fs, 1rem) * 22.6);
+    }
+    /* La media sangra hasta el borde derecho e inferior de la pantalla. */
+    .about-media {
+        position: relative;
+        min-height: 100%;
+    }
+    @media not all and (min-width: 80rem) {
+        .about-copy {
+            width: auto;
+            margin-left: 0;
+        }
+        .about-media {
+            min-height: 0;
+        }
+    }
+
+    /* ---------- Participaciones, p.7 real ------------------------- *
+     * **Escala 1:1 con el PDF.** Todos los cuerpos de aquí salen de la
+     * capa de texto de la p.7 (`mutool draw -F stext`, página vectorial)
+     * escalada del lienzo del PDF (1440×810) al de referencia
+     * (1920×1080), o sea ×1.3333, y divididos entre 16 para expresarlos
+     * en unidades de `--screen-fs`.
+     *
+     * F5 los había multiplicado además por 1728/1843 = 0.938 para meter
+     * la diapositiva dentro de la caja de 1728px del resto del sitio. La
+     * p.7 no tiene esa caja: compone de x=35 a x=1878. El resultado era
+     * una composición un **7 % más pequeña y centrada** que el diseño,
+     * que es lo que el usuario reportó. Al sangrar la pantalla hasta el
+     * borde, el factor desaparece y las cifras son las del PDF.
+     *
+     *   112.19px  «Participaciones»          Segoe UI Bold
+     *    26.66px  bajada                      Libre Baskerville Italic
+     *    32.92px  título de la tarjeta        Segoe UI Bold
+     *    21.33px  valores FECHA/SEDE/UBIC.    Segoe UI
+     *    17.33px  chip «PRÓXIMO EVENTO»       Arial Bold
+     *    43.58px  «Rumbo a las competencias»  Segoe UI Bold
+     *    17.33px  cuerpo del panel            Segoe UI
+     *    18.66px  etiquetas SPRING / 2027     Arial Bold
+     *    22.66px  nombre de competencia       Segoe UI Bold
+     *    20.00px  bajada de competencia       Segoe UI                */
+    /* **Aire vertical y sangrado a la derecha (F7b).** La composición de
+     * la p.7 mide 62.5 unidades de contenido (los 1000px que deja el nav)
+     * y hasta ahora se pintaba pegada a los cuatro bordes: el chip
+     * «PRÓXIMO EVENTO» y la caja del título arrancaban en y=0 y la última
+     * competencia y el video terminaban en y=1000, sin un pixel de aire y
+     * pegados a la diapositiva anterior.
+     *
+     * La pantalla declara ahora 66.5 unidades —62.5 de contenido más 2 de
+     * margen arriba y 2 abajo— y `--screen-fs` sale de ahí. A 1920×1080 la
+     * unidad baja de 16px a 15.04 (×0.94) y aparecen 30px de aire por
+     * lado.
+     *
+     * **Por qué esto no repite el error de F5.** Lo que el usuario rechazó
+     * entonces (D-156) fue una composición «más pequeña y centrada»: F5
+     * encogía la diapositiva y dejaba el hueco sobrante repartido a los
+     * lados. Aquí la columna derecha es `1fr` y `padding-right` es cero,
+     * así que el sobrante se lo come el media, que **sangra hasta x=1920**
+     * igual que la foto de la p.6 justo encima. Ése era el «desfase feo»:
+     * la foto de arriba llegaba al borde y esta se quedaba a 43px
+     * (D-177). */
+    @media (min-width: 80rem) {
+        .screen.participations-screen {
+            --screen-fs: clamp(
+                0.62rem,
+                min(0.833vw, calc(var(--screen-h) / 66.5)),
+                1.15rem
+            );
+        }
+    }
+    .participations-title {
+        font-size: calc(var(--screen-fs, 1rem) * 7.012);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.01em;
+    }
+    /* Los huecos que rodean a la bajada van en unidades del LIENZO, no en
+     * `em`. Es la trampa de siempre: `em` se resuelve contra el cuerpo del
+     * propio elemento, y este párrafo mide 26.6px, no los 16 de la unidad
+     * base — un `mt-[1.5em]` daba 40px donde el diseño pide 24. Aquí el
+     * `calc(var(--screen-fs) * k)` no deja lugar a dudas.
+     *
+     * 161 (caja del título) + 24 + 62 (bajada) + 21 + 732 (media) = 1000,
+     * el alto exacto que deja el nav. */
+    .participations-subtitle {
+        font-size: calc(var(--screen-fs, 1rem) * 1.666);
+        line-height: 1.163;
+    }
+    @media (min-width: 80rem) {
+        .participations-subtitle {
+            margin-top: calc(var(--screen-fs, 1rem) * 1.5);
+        }
+        .participations-media {
+            margin-top: calc(var(--screen-fs, 1rem) * 1.3125);
+        }
+        /* 71px sobre el lienzo (y 692..762 en la p.7). En `em` habrían
+         * salido 83, porque la etiqueta mide 18.65px. */
+        .competition-tag {
+            min-height: calc(var(--screen-fs, 1rem) * 4.4375);
+        }
+    }
+    /* Chip enmarcado del PDF: 252×35px con el texto a 17.33px. `.t-eyebrow`
+     * vale 15.6px porque se midió en la p.1; aquí manda la p.7. */
+    .event-card-eyebrow {
+        font-size: calc(var(--screen-fs, 1rem) * 1.083);
+    }
+    /* 26.5 unidades (424px). La línea más larga, «The 2027 AIChE
+     * Southwest», mide 398.5px en Segoe UI Bold y ~416 en Arial; con 424
+     * cabe entera y «Student Regional Conference» sigue partiendo en dos,
+     * como en el diseño. */
+    .event-card-title {
+        max-width: calc(var(--screen-fs, 1rem) * 26.5);
+        font-size: calc(var(--screen-fs, 1rem) * 2.0575);
+        font-weight: 700;
+        line-height: 1.154;
+    }
+    /* Bandas blancas de 60px con 12 de hueco (y 253..313, 325..385,
+     * 397..457 sobre una tarjeta que va de y=49 a y=476). */
+    .event-data-row {
+        min-height: calc(var(--screen-fs, 1rem) * 3.75);
+    }
+    .event-data-value {
+        font-size: calc(var(--screen-fs, 1rem) * 1.333);
+        line-height: 1.2;
+    }
+    .participations-panel-title {
+        max-width: calc(var(--screen-fs, 1rem) * 28);
+        font-size: calc(var(--screen-fs, 1rem) * 2.724);
+        font-weight: 700;
+        line-height: 0.895;
+    }
+    .participations-panel-intro {
+        font-size: calc(var(--screen-fs, 1rem) * 1.083);
+        line-height: 1.143;
+    }
+    /* Caja de la etiqueta: 83×71px, medida sobre los bordes claros de la
+     * p.7 (x 68..151; y 692..762 en la primera fila).
+     *
+     * `overflow-wrap: normal` es deliberado y necesario. La regla global
+     * `anywhere` de F6 evita que una palabra rompa la composición, pero
+     * aquí producía «SPRIN / G / 2027»: son etiquetas cortas y fijas de
+     * `data/competitions.ts`, cada palabra en su propio `<span>`, y la
+     * caja está dimensionada para la más larga («SPRING», 71.5px a
+     * 18.66px de Arial Bold). Partirlas por la mitad no arregla nada, se
+     * ve roto. Si algún día una etiqueta no cupiera, desbordaría a lo
+     * ancho y `check:overflow` lo cazaría, que es la red que toca.
+     *
+     * Sin tracking: en el PDF «SPRING» ocupa sus 71.5px naturales, no
+     * lleva el 0.30em de `.eyebrow`. */
+    .competition-tag {
+        font-size: calc(var(--screen-fs, 1rem) * 1.166);
+        line-height: 1.08;
+        letter-spacing: 0;
+        overflow-wrap: normal;
+    }
+    .competition-name {
+        font-size: calc(var(--screen-fs, 1rem) * 1.416);
+        line-height: 1.08;
+    }
+    .competition-blurb {
+        font-size: calc(var(--screen-fs, 1rem) * 1.25);
+        line-height: 1.12;
+    }
+
+    /* Southwest 2027, p.8 real: dos bandas apiladas dentro de los 1000px
+     * que deja el nav. El copy es el mismo que usa la variante crema. */
+    .competition-layout-navy {
+        display: grid;
+        grid-template-rows: 53.611% 16.111% 30.278%;
+        color: var(--color-white);
+    }
+    .competition-layout-navy .competition-what {
+        display: flex;
+        grid-row: 1;
+        flex-direction: column;
+        align-items: center;
+        padding-top: calc(var(--screen-fs, 1rem) * 4.2);
+    }
+    .competition-navy-primary {
+        width: calc(var(--screen-fs, 1rem) * 100);
+        font-size: calc(var(--screen-fs, 1rem) * 5.093);
+        font-weight: 700;
+        line-height: 1.159;
+        letter-spacing: 0.03em;
+        text-align: center;
+    }
+    .competition-navy-body {
+        font-size: calc(var(--screen-fs, 1rem) * 1.546);
+        line-height: 1.685;
+        text-align: justify;
+        hyphens: auto;
+    }
+    /* 85.5 unidades = los 1477px de medida de la p.8 reescalados por el
+     * 0.926 que impone el nav. Con 90 la caja era más ancha que el
+     * diseño y el texto rompía una línea antes de tiempo. */
+    .competition-navy-what-body {
+        width: calc(var(--screen-fs, 1rem) * 85.5);
+        margin-top: calc(var(--screen-fs, 1rem) * 2.2);
+    }
+    .competition-layout-navy .competition-why {
+        display: contents;
+    }
+    .competition-navy-secondary {
+        display: flex;
+        grid-row: 2;
+        align-items: center;
+        justify-content: center;
+        border-block: calc(var(--screen-fs, 1rem) * 0.1875) solid var(--color-white);
+        background: var(--color-navy);
+        font-size: calc(var(--screen-fs, 1rem) * 4.707);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.03em;
+        text-align: center;
+    }
+    .competition-navy-secondary > span {
+        transform: translateY(calc(var(--screen-fs, 1rem) * 0.4));
+    }
+    /* La p.8 usa 28px en la banda inferior y 26.7 en la superior; el
+     * factor de pantalla los deja en 25.9 y 24.7. */
+    .competition-navy-why-body {
+        grid-row: 3;
+        font-size: calc(var(--screen-fs, 1rem) * 1.62);
+        width: calc(var(--screen-fs, 1rem) * 71);
+        margin-left: calc(var(--screen-fs, 1rem) * 10.69);
+        padding-top: calc(var(--screen-fs, 1rem) * 2.625);
+    }
+    .competition-car-cutout {
+        position: absolute;
+        right: calc(var(--screen-fs, 1rem) * 10.17);
+        bottom: calc(var(--screen-fs, 1rem) * 2.25);
+        width: calc(var(--screen-fs, 1rem) * 20.8);
+    }
+
+    /* Variante crema, p.12 real: dos columnas y galería 544×300. */
+    .competition-layout-cream {
+        display: grid;
+        grid-template-columns: repeat(2, calc(var(--screen-fs, 1rem) * 51.5));
+        column-gap: calc(var(--screen-fs, 1rem) * 4.6875);
+        align-content: start;
+        padding-top: calc(var(--screen-fs, 1rem) * 3.4375);
+    }
+    .competition-eyebrow {
+        grid-column: 1 / -1;
+    }
+    .competition-layout-cream .competition-what,
+    .competition-layout-cream .competition-why {
+        margin-top: calc(var(--screen-fs, 1rem) * 1.625);
+    }
+    /* En la p.12 los dos cuerpos arrancan a la misma altura aunque el
+     * titular de la izquierda ocupe dos líneas y el de la derecha una.
+     * Se reserva el alto de las dos líneas en ambos. */
+    .competition-layout-cream .competition-what > :first-child,
+    .competition-layout-cream .competition-why > :first-child {
+        min-height: calc(var(--screen-fs, 1rem) * 6.76);
+    }
+    .competition-cream-body {
+        margin-top: calc(var(--screen-fs, 1rem) * 1.5);
+        font-size: calc(var(--screen-fs, 1rem) * 1.33);
+        line-height: 1.5;
+    }
+    /* Galería de 3×544×300 a y=661 sobre el lienzo (p.12). */
+    .competition-gallery {
+        grid-column: 1 / -1;
+        margin-top: calc(var(--screen-fs, 1rem) * 5.5625);
+    }
+
+    /* Patrocinios, p.10 y p.11 reales. */
+    /* Medida de 44 unidades (704px): en el PDF "Tu patrocinio nos" mide
+     * 595px y "…nos lleva" no cabría en 704 ni en Segoe UI ni en Arial,
+     * así que el corte de línea cae donde el diseño en las dos. Antes
+     * eran 52.4 unidades y la línea salía "Tu patrocinio nos lleva".
+     * Interlínea 77px sobre 74 de cuerpo, medida en la p.10. */
+    .sponsor-hero-title {
+        width: calc(var(--screen-fs, 1rem) * 44);
+        margin-top: calc(var(--screen-fs, 1rem) * 1.3125);
+        font-size: calc(var(--screen-fs, 1rem) * 4.625);
+        font-weight: 700;
+        line-height: 1.041;
+        letter-spacing: -0.01em;
+    }
+    /* Cuerpo de 23.9px con interlínea de 34, medidos en la p.10 igual
+     * que el de la p.6. Estaba a 21.3 (`.t-lead`, que es el tamaño del
+     * párrafo del hero de la p.1) y salían 4 líneas en vez de 5. */
+    .sponsor-hero-copy {
+        width: calc(var(--screen-fs, 1rem) * 50);
+        margin-top: calc(var(--screen-fs, 1rem) * 6.3875);
+        font-size: calc(var(--screen-fs, 1rem) * 1.494);
+        line-height: 1.4226;
+    }
+    .sponsor-packages-heading {
+        margin-top: calc(var(--screen-fs, 1rem) * 1.5125);
+    }
+    .sponsor-package-grid {
+        margin-top: calc(var(--screen-fs, 1rem) * 2.0625);
+    }
+    /* El hueco etiqueta→precio va en unidades de pantalla, no en `em`:
+     * dentro del precio un `em` son 40px, no 16, y el margen se
+     * triplicaba (se vio en la primera pasada de F5b). */
+    .sponsor-package-compact-price {
+        margin-top: calc(var(--screen-fs, 1rem) * 0.75);
+        font-size: calc(var(--screen-fs, 1rem) * 2.5);
+        line-height: 1;
+    }
+    .sponsor-package-compact-price-lg {
+        font-size: calc(var(--screen-fs, 1rem) * 3.25);
+    }
+    .sponsor-benefits-title {
+        margin-top: calc(var(--screen-fs, 1rem) * 1.25);
+    }
+    .sponsor-benefits-note {
+        margin-top: calc(var(--screen-fs, 1rem) * 3.6);
+        font-size: calc(var(--screen-fs, 1rem) * 1.245);
+        line-height: 1.3;
+    }
+    .sponsor-tier-grid {
+        margin-top: calc(var(--screen-fs, 1rem) * 2.15);
+    }
+    .sponsor-package-full {
+        height: calc(var(--screen-fs, 1rem) * 45.69);
+    }
+    .sponsor-package-full-price {
+        font-size: calc(var(--screen-fs, 1rem) * 3.18);
+        line-height: 1;
+    }
+    .sponsor-benefits {
+        font-size: calc(var(--screen-fs, 1rem) * 1.25);
+        line-height: 1.45;
+    }
+
+    /* Contacto, p.14 real. */
+    .contact-title {
+        margin-top: calc(var(--screen-fs, 1rem) * 2);
+        transform: translateY(calc(var(--screen-fs, 1rem) * -0.75));
+    }
+    .contact-eyebrow {
+        transform: translateY(calc(var(--screen-fs, 1rem) * -0.375));
+    }
+    .contact-subtitle {
+        margin-top: calc(var(--screen-fs, 1rem) * 2.25);
+    }
+    .contact-details {
+        margin-top: calc(var(--screen-fs, 1rem) * 3);
+    }
+    .contact-value {
+        font-size: calc(var(--screen-fs, 1rem) * 2.5);
+        line-height: 1.15;
+    }
+
+    /* Franja de cargo bajo cada retrato de la mesa directiva (p.13).
+     *
+     * Reserva dos líneas SIEMPRE. Los seis cargos de `data/team.ts` no
+     * miden lo mismo: "Presidente" cabe en una línea y "Responsabilidad
+     * social" necesita dos, así que la franja crecía sólo en algunas
+     * tarjetas y las fotos de esa fila quedaban desalineadas. Con la
+     * altura fija la rejilla queda pareja sin recortar ni encoger texto.
+     *
+     * `2.5em` son las dos líneas (`leading-tight`, 1.25) y `0.8em` el
+     * `py-[0.4em]` de la propia franja, que entra en el cálculo porque
+     * el proyecto usa `box-sizing: border-box`.
+     *
+     * `overflow-wrap: normal` es deliberado, igual que en
+     * `.competition-tag`: la regla global `anywhere` de F6 partía
+     * "RESPONSABILIDA / D SOCIAL" a 390px. Son cargos cortos y fijos de
+     * `data/team.ts`; si alguno no cupiera, `check:overflow` lo caza. */
+    .team-role {
+        min-height: calc(2.5em + 0.8em);
+        overflow-wrap: normal;
+    }
+
+    @media not all and (min-width: 80rem) {
+        .competition-layout-navy,
+        .competition-layout-cream {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 3rem 1.5rem;
+        }
+        .competition-layout-navy .competition-what,
+        .competition-layout-navy .competition-why {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+        }
+        .competition-navy-primary,
+        .competition-navy-secondary,
+        .competition-navy-what-body,
+        .competition-navy-why-body {
+            width: auto;
+            margin: 0;
+        }
+        .competition-navy-primary,
+        .competition-navy-secondary {
+            font-size: clamp(2rem, 7vw, 4rem);
+            line-height: 1.05;
+        }
+        .competition-navy-secondary {
+            margin-inline: -1.5rem;
+            padding: 2rem 1.5rem;
+        }
+        .competition-navy-secondary > span {
+            transform: none;
+        }
+        .competition-navy-body {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.65;
+            text-align: left;
+        }
+        .competition-car-cutout {
+            position: static;
+            width: min(22rem, 80vw);
+            margin-left: auto;
+        }
+        .competition-layout-cream {
+            width: 100%;
+        }
+        .competition-layout-cream .competition-what,
+        .competition-layout-cream .competition-why,
+        .competition-gallery {
+            margin-top: 0;
+        }
+        .sponsor-hero-title,
+        .sponsor-hero-copy {
+            width: auto;
+        }
+        .sponsor-hero-title {
+            margin-top: 1.5rem;
+            font-size: clamp(2.25rem, 8vw, 4rem);
+        }
+        .sponsor-hero-copy {
+            margin-top: 2rem;
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+        .sponsor-packages-heading,
+        .sponsor-package-grid,
+        .sponsor-tier-grid {
+            margin-top: 2rem;
+        }
+        .sponsor-package-full {
+            height: auto;
+        }
+        .sponsor-benefits {
+            font-size: 1rem;
+        }
+        .contact-title,
+        .contact-subtitle,
+        .contact-details {
+            margin-top: 1.5rem;
+        }
+        .contact-title,
+        .contact-eyebrow {
+            transform: none;
+        }
+        .contact-value {
+            font-size: clamp(1.5rem, 7vw, 2.5rem);
+        }
+    }
+
+    @media not all and (min-width: 80rem) {
+        .t-lead { font-size: 1rem; line-height: 1.6; }
+        .t-body { font-size: 1rem; line-height: 1.6; }
+        .t-quote { font-size: 1.25rem; line-height: 1.35; }
+        .t-num { font-size: 2.5rem; }
+        .t-eyebrow { font-size: 0.75rem; }
+        .t-label { font-size: 0.6875rem; }
+        .participations-title { font-size: 2.5rem; }
+        .participations-subtitle { font-size: 1.125rem; line-height: 1.45; }
+        .event-card-title { font-size: 1.5rem; }
+        .event-data-value { font-size: 1rem; }
+        .participations-panel-title { font-size: 2rem; line-height: 1; }
+        .participations-panel-intro { font-size: 1rem; line-height: 1.5; }
+        .competition-tag { font-size: 0.75rem; }
+        .competition-name { font-size: 1rem; }
+        .competition-blurb { font-size: 0.9375rem; }
+        .event-card-eyebrow { font-size: 0.75rem; }
+    }
+
+    /* En móvil el lienzo apaisado no aplica (ver §A3 arriba): los
+     * títulos vuelven a una escala fluida por ancho, que es lo correcto
+     * en una columna estrecha. */
+    @media not all and (min-width: 80rem) {
+        .h-hero {
+            font-size: clamp(2.25rem, 1.25rem + 5vw, 3.25rem);
+            line-height: 1.08;
+        }
+        .h-display {
+            font-size: clamp(2rem, 1.15rem + 4.2vw, 3rem);
+            line-height: 1.08;
+        }
+        .h-section {
+            font-size: clamp(1.75rem, 1rem + 3.4vw, 2.5rem);
+            line-height: 1.02;
+        }
+        .h-page {
+            font-size: clamp(1.625rem, 1rem + 3vw, 2.25rem);
+            line-height: 1.12;
+        }
+        .h-card {
+            font-size: clamp(1.375rem, 1rem + 1.6vw, 1.75rem);
+        }
+        .h-card-sm {
+            font-size: clamp(1.125rem, 1rem + 0.8vw, 1.375rem);
+        }
+    }
+}

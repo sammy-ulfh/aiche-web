@@ -1,0 +1,126 @@
+---
+/**
+ * TeamGrid — p.13 del PDF: mesa directiva (6 retratos) + equipo.
+ *
+ * Es **una sola diapositiva** y por tanto una sola pantalla: eyebrow,
+ * título, las dos etiquetas de columna y las dos rejillas. Antes se
+ * partía en dos `Screen` (una con el título y otra con las fotos), así
+ * que el título ocupaba una pantalla entera él solo y las fotos no se
+ * veían sin hacer scroll.
+ *
+ * Medidas tomadas en F4 sobre el PDF rasterizado a 1920×1080:
+ *
+ *   eyebrow ACERCA DE NOSOTROS   x=97, altura de caja alta 11px
+ *   título                       x=96, 56px, línea base y=205
+ *   etiquetas + filete           línea base y≈267, filete a media altura
+ *   6 retratos                   263×334 (proporción 263/334), hueco 25px
+ *   foto de grupo                825×692, x 1002..1826
+ *   hueco entre columnas         67px
+ *
+ * Los retratos originales son 2:3 (4640×6960) y la caja del diseño es más
+ * ancha (263/334), así que `object-cover` recorta un 15 % de alto. Con el
+ * encuadre centrado ese recorte se repartía arriba y abajo y, como las
+ * fotos vienen con muy poco aire sobre la cabeza, cortaba el cabello. De
+ * ahí `object-top`: el recorte se va entero al borde inferior.
+ *
+ * El PDF no muestra nombres ni cargos bajo los retratos y en F4 se
+ * habían retirado, pero el usuario los pidió de vuelta: bajo cada
+ * retrato van dos franjas horizontales a todo el ancho de la tarjeta,
+ * primero el cargo sobre azul (`navy-700`, para que se despegue del
+ * fondo `navy` de la sección) y debajo el nombre completo sobre blanco.
+ * Los textos salen de `data/team.ts`, que hoy sigue con los
+ * placeholders "Nombre Apellido / Cargo" hasta que el usuario entregue
+ * los datos reales (RULES §19.5).
+ *
+ * **Las seis tarjetas miden lo mismo pase lo que pase.** Antes la
+ * proporción 263/334 estaba en el `<li>` y el retrato era `flex-1`, así
+ * que un cargo de dos líneas ("Responsabilidad social", "Responsable de
+ * proyectos") le robaba 18px a su foto: las franjas azules quedaban a
+ * distinta altura que las de sus vecinas. Ahora la proporción vive en la
+ * caja del retrato (263/256 = 334 menos las dos franjas) y el cargo
+ * reserva SIEMPRE dos líneas (`.team-role`), ocupe una o dos. El nombre
+ * cierra la tarjeta con `flex-1` para que, si en móvil alguno parte en
+ * dos líneas, el resto de la fila estire su franja blanca hasta la misma
+ * altura en vez de dejar hueco.
+ */
+import Screen from '../ui/Screen.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import Img from '../media/Img.astro';
+import Reveal from '../ui/Reveal.astro';
+import { team as teamCopy } from '../../data/content';
+import { board as boardMembers } from '../../data/team';
+import { media } from '../../data/media';
+
+const portraits = media.board.map((asset, i) => ({
+    asset,
+    member: boardMembers[i],
+}));
+---
+
+<Screen tone="navy" class="relative" section="team-grid" aria-labelledby="page-title">
+    <GridBackdrop />
+
+    <div class="relative">
+        <Reveal>
+            <p class="eyebrow t-eyebrow text-navy-200">{teamCopy.eyebrow}</p>
+            <h1 id="page-title" class="mt-4 h-page text-white">
+                {teamCopy.title}
+            </h1>
+        </Reveal>
+
+        <div class="mt-10 grid gap-[4.1875em] canvas:grid-cols-[838fr_825fr]">
+            {/* MESA DIRECTIVA — rejilla 3×2 de retratos */}
+            <Reveal>
+                <h2 class="flex items-center gap-[1.25em]">
+                    <span class="eyebrow t-label text-navy-200">{teamCopy.boardLabel}</span>
+                    <span aria-hidden="true" class="h-px flex-1 bg-navy-200/35"></span>
+                </h2>
+
+                <ul class="mt-6 grid grid-cols-2 gap-[1.5625em] sm:grid-cols-3">
+                    {portraits.map(({ asset, member }, i) => (
+                        <li class="flex w-full flex-col overflow-hidden">
+                            <div class="relative aspect-[263/256] w-full shrink-0 overflow-hidden bg-black">
+                                <Img
+                                    src={asset.src}
+                                    alt={`${member.name} — ${member.role}`}
+                                    width={asset.w}
+                                    height={asset.h}
+                                    loading={i < 3 ? 'eager' : 'lazy'}
+                                    fetchpriority={i === 0 ? 'high' : undefined}
+                                    sizes="(min-width: 80rem) 14vw, 42vw"
+                                    class="absolute inset-0 h-full w-full object-cover object-top"
+                                />
+                            </div>
+                            <p class="eyebrow t-label team-role flex shrink-0 items-center justify-center bg-navy-700 px-[0.5em] py-[0.4em] text-center leading-tight text-white">
+                                {member.role}
+                            </p>
+                            <p class="t-label flex min-h-[2.1em] flex-1 items-center justify-center bg-white px-[0.5em] py-[0.4em] text-center font-semibold leading-tight text-navy">
+                                {member.name}
+                            </p>
+                        </li>
+                    ))}
+                </ul>
+            </Reveal>
+
+            {/* EQUIPO — foto grupal */}
+            <Reveal delay={150}>
+                <h2 class="flex items-center gap-[1.25em]">
+                    <span class="eyebrow t-label text-navy-200">{teamCopy.teamLabel}</span>
+                    <span aria-hidden="true" class="h-px flex-1 bg-navy-200/35"></span>
+                </h2>
+
+                <div class="relative mt-6 aspect-[825/692] w-full overflow-hidden bg-navy-900">
+                    <Img
+                        src={media.teamGroup.src}
+                        alt={media.teamGroup.alt}
+                        width={media.teamGroup.w}
+                        height={media.teamGroup.h}
+                        loading="lazy"
+                        sizes="(min-width: 80rem) 43vw, 88vw"
+                        class="absolute inset-0 h-full w-full object-cover"
+                    />
+                </div>
+            </Reveal>
+        </div>
+    </div>
+</Screen>

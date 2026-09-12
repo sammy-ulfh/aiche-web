@@ -1,0 +1,24 @@
+{
+    "name": "AIChE GDL",
+    "short_name": "AIChE GDL",
+    "description": "Capítulo Estudiantil AIChE — Tec de Monterrey Campus Guadalajara.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#123f72",
+    "theme_color": "#123f72",
+    "lang": "es-MX",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "type": "image/svg+xml",
+            "sizes": "any",
+            "purpose": "any"
+        },
+        {
+            "src": "/favicon.ico",
+            "type": "image/x-icon",
+            "sizes": "32x32"
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+---
+/**
+ * CompetitionList — lista de las 4 competencias AIChE del panel «Rumbo a
+ * las competencias AIChE» (p.7 del PDF).
+ *
+ * La fuente de datos es SIEMPRE `data/competitions.ts` (RULES §6):
+ * ningún string de copy vive en este archivo.
+ *
+ * Geometría medida sobre la p.7 a 1920×1080 (escala 1:1):
+ *
+ *   fila            88.7px de alto, separada por una línea blanca de 1px
+ *                   (separadores en y 681, 770, 859, 947)
+ *   caja de etiqueta 83×71px, borde de 2px navy-200, x 68..151
+ *   hueco etiqueta → texto  17px
+ *
+ * **Tenía una variante `compact`** —un resumen lineal— para la sección
+ * `NextEvent` del home, que desapareció en D-153. Al quedarse con un solo
+ * uso, la prop `variant` era una API hipotética y se retiró (§A4).
+ */
+
+import type { Competition } from '../../data/competitions';
+
+interface Props {
+    competitions: readonly Competition[];
+    class?: string;
+}
+
+const props = Astro.props as Props;
+const className = props.class ?? '';
+---
+
+<ul
+    class:list={['participations-competition-list flex flex-col', className]}
+    aria-label="Lista de competiciones AIChE"
+>
+    {/* Fila: 88.7px de alto en el lienzo (separadores en y 681, 770, 859 y
+        947 de la p.7). Apilada crece con su contenido —el nombre de la
+        competencia se parte en dos o tres líneas— y el aire lo pone el
+        padding, porque ahí no hay alto fijo. */}
+    {props.competitions.map((competition) => (
+        <li
+            class="grid grid-cols-[5.1875em_1fr] items-center gap-[1.06em] border-t border-white py-3 canvas:h-[5.54em] canvas:py-0"
+        >
+            <span
+                class="eyebrow competition-tag flex min-h-[3.8em] flex-col items-center justify-center border-[0.125em] border-navy-200 px-[0.2em] text-center text-white"
+            >
+                {/* Cada palabra en su propia línea, como en el diseño
+                    («SPRING» sobre «2027»). */}
+                {competition.tag.split(' ').map((word) => <span>{word}</span>)}
+            </span>
+
+            <span class="flex flex-col">
+                <span class="competition-name font-semibold text-white">
+                    {competition.name}
+                </span>
+                <span class="competition-blurb text-white/65">
+                    {competition.blurb}
+                </span>
+            </span>
+        </li>
+    ))}
+</ul>

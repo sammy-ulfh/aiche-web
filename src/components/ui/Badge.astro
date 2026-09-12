@@ -1,0 +1,49 @@
+---
+/**
+ * Badge — chapa rectangular con etiqueta corta.
+ *
+ * Es el mismo objeto en las cuatro apariciones del PDF: «HIGH LIGHTS» y
+ * «19 SEP · 19:00 H» sobre el video de la p.6, y «SPRING 2027» /
+ * «OPEN CALL 2027» de la p.7. Medidas tomadas en F4 sobre el PDF a
+ * 1920×1080:
+ *
+ *   HIGH LIGHTS   211×47, borde 1px, punto + Arial Bold 16px, 0.30em
+ *   19 SEP…       195×37, misma caja sin punto
+ *
+ * El punto va en navy-200 (el mismo azul claro de las etiquetas y de los
+ * bordes de las cajas del contador), no en `currentColor`: así se lee
+ * como acento y no como parte del texto.
+ *
+ * Contraste (RULES §13): sobre navy el texto es blanco (>15:1); sobre
+ * crema, navy (#123f72, 9.40:1).
+ */
+interface Props {
+    tone?: 'navy' | 'cream' | 'light';
+    dot?: boolean;
+    class?: string;
+}
+
+const { tone = 'navy', dot = false, class: className = '' } = Astro.props as Props;
+
+const tones = {
+    navy: 'border-navy-400/60 text-navy',
+    cream: 'border-navy/30 text-navy',
+    light: 'border-white/70 text-white',
+} as const;
+---
+
+<span
+    class:list={[
+        'eyebrow inline-flex items-center gap-3 border px-4 py-[0.55em] t-eyebrow leading-none',
+        tones[tone],
+        className,
+    ]}
+>
+    {dot && (
+        <span
+            aria-hidden="true"
+            class="h-[0.45em] w-[0.45em] rounded-full bg-navy-200"
+        ></span>
+    )}
+    <slot />
+</span>

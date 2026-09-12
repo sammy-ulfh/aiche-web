@@ -1,0 +1,73 @@
+---
+/**
+ * SponsorTeaser — resumen de patrocinios para la home (RULES §9.5).
+ *
+ * Composición (resumida respecto a la p.9 del PDF):
+ *  - Eyebrow PATROCINIOS.
+ *  - Título + párrafo.
+ *  - 3 mini-tarjetas con `PAQUETE N` + precio.
+ *  - CTA "Ver paquetes" hacia /patrocinios.
+ */
+import Screen from '../ui/Screen.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import Button from '../ui/Button.astro';
+import Reveal from '../ui/Reveal.astro';
+import PackageCard from '../ui/PackageCard.astro';
+import { sponsors, hero } from '../../data/content';
+import { sponsorCurrencySymbol, sponsorTiers } from '../../data/sponsors';
+---
+
+<Screen
+    tone="navy"
+    bleed
+    class="relative"
+    section="sponsor-teaser"
+    aria-labelledby="sponsor-teaser-title"
+>
+    <div class="flex flex-col gap-10">
+        <Reveal>
+            <div class="flex flex-col gap-3">
+                <Eyebrow tone="navy">{sponsors.eyebrow}</Eyebrow>
+                <h2 id="sponsor-teaser-title" class="h-section text-white">
+                    {sponsors.title}
+                </h2>
+                <p class="max-w-2xl text-base text-white/85 canvas:text-lg">
+                    {sponsors.paragraph}
+                </p>
+            </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+            <p class="eyebrow text-xs text-cream">{sponsors.packagesLabel}</p>
+        </Reveal>
+
+        {/* El `Reveal` envuelve la lista entera, no cada tarjeta.
+          * Antes iba por tarjeta y metía un `<div>` entre el `<ol>` y sus
+          * `<li>`: lista inválida y dos fallos de axe (`list` y
+          * `listitem`) que bajaban la accesibilidad de la home a 92 en
+          * móvil y a 87 en escritorio (F7, D-167). `PackageCard` **es**
+          * el `<li>`, así que no cabe un envoltorio intermedio; la
+          * entrada escalonada se cambia por una sola del grupo. */}
+        <Reveal delay={150}>
+            <ol class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {sponsorTiers.map((tier) => (
+                    <PackageCard
+                        tier={tier}
+                        currencySymbol={sponsorCurrencySymbol}
+                        variant="compact"
+                        padding="normal"
+                        priceSize="lg"
+                    />
+                ))}
+            </ol>
+        </Reveal>
+
+        <Reveal delay={400}>
+            <div class="pt-2">
+                <Button variant="primary" size="lg" href={hero.sponsorTeaserCtaHref}>
+                    {hero.sponsorTeaserCta}
+                </Button>
+            </div>
+        </Reveal>
+    </div>
+</Screen>

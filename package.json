@@ -1,0 +1,33 @@
+{
+  "name": "aiche",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "capture": "bun scripts/capture.mjs",
+    "check:render": "node scripts/check-render.mjs",
+    "check:overflow": "node scripts/check-overflow.mjs",
+    "check:layers": "node scripts/check-layers.mjs",
+    "check:states": "node scripts/check-states.mjs",
+    "check:network": "node scripts/check-network.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "@fontsource/libre-baskerville": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.2",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "playwright": "^1.62.1",
+    "typescript": "^6.0.0"
+  }
+}

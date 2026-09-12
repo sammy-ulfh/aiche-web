@@ -1,0 +1,63 @@
+---
+/**
+ * MediaFrame — wrapper reutilizable para una imagen a sangre con
+ * fondo navy-900 y proporción tomada del manifest.
+ *
+ * Evita la copia del bloque `relative w-full overflow-hidden bg-navy-900`
+ * + `<Img absolute object-cover>` que se repetía en 4 secciones
+ * (SponsorHero, SponsorTiers, ContactBlock, CompetitionInfo).
+ *
+ * Props:
+ *  - `asset`: `ImageAsset` del manifest (`data/media.ts`).
+ *  - `eager`: si es `true`, marca `loading="eager"` + `fetchpriority="high"`.
+ *    Reservado para LCP (hero); el resto pasa `false` (lazy).
+ *  - `sizes`: descriptor para el `srcset` de `Img`. El valor por defecto
+ *    sale de medir los huecos reales (`docs/PERFORMANCE.md` §3.4): los
+ *    marcos grandes —hero de Patrocinios, foto de Contacto— ocupan 823px
+ *    de 1920 (43vw) y 340 de 390 (87vw). Los marcos pequeños pasan el
+ *    suyo.
+ *  - `class`: clase extra para el contenedor.
+ *
+ * La proporción se calcula en build desde `${asset.w} / ${asset.h}` o
+ * desde el override medido del marco. Cumple §16.3 y mantiene CLS = 0
+ * porque la caja queda reservada antes de cargar la imagen.
+ */
+import Img from './Img.astro';
+import type { ImageAsset } from '../../data/media';
+
+interface Props {
+    asset: ImageAsset;
+    eager?: boolean;
+    /** Proporción visible del marco; la imagen conserva sus medidas intrínsecas. */
+    ratio?: string;
+    sizes?: string;
+    class?: string;
+}
+
+const {
+    asset,
+    eager = false,
+    ratio,
+    sizes = '(min-width: 80rem) 45vw, 90vw',
+    class: className = '',
+} = Astro.props;
+const loading = eager ? 'eager' : 'lazy';
+const fp = eager ? 'high' : undefined;
+const frameRatio = ratio ?? `${asset.w} / ${asset.h}`;
+---
+
+<div
+    class={`relative w-full overflow-hidden bg-navy-900 ${className}`}
+    style={`aspect-ratio:${frameRatio};`}
+>
+    <Img
+        src={asset.src}
+        alt={asset.alt}
+        width={asset.w}
+        height={asset.h}
+        loading={loading}
+        fetchpriority={fp}
+        sizes={sizes}
+        class="absolute inset-0 h-full w-full object-cover"
+    />
+</div>

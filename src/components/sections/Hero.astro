@@ -1,0 +1,71 @@
+---
+/**
+ * Hero — sección de apertura de la home (RULES §9.1 + p.1 del PDF).
+ *
+ * Composición y medidas, tomadas en F4 del PDF vectorial (`mutool draw
+ * -F stext`) y llevadas al lienzo de 1920×1080:
+ *
+ *   isotipo                148×170, arranca 74px por debajo del nav
+ *   h1 (dos líneas)        Segoe UI Bold 105.4px, interlínea 111px
+ *   párrafo                Segoe UI 21.3px, interlínea 33px, medida 921px
+ *   FALTAN                 Arial Bold 15.6px, tracking 0.30em
+ *   cajas del contador     181×138, 16px de hueco, 1px de borde navy-200
+ *   ¡PARA NUESTRA…!        Arial Bold 15.6px, tracking 0.30em
+ *
+ * Los huecos verticales (74 / 58 / 47 / 37 / 22 px) salen de restar las
+ * líneas base medidas y se expresan en unidades de la pantalla, así que
+ * la composición se mantiene a cualquier resolución (ADENDA §A3).
+ *
+ * RULES §3.4: el isotipo es el candidato a LCP → `eager`.
+ */
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import Screen from '../ui/Screen.astro';
+import Countdown from '../ui/Countdown.astro';
+import Logo from '../ui/Logo.astro';
+import { hero } from '../../data/content';
+import { media } from '../../data/media';
+import { countdownLabel, countdownBoxLabels, countdownPostEvent } from '../../data/site';
+import { eventStartIso, eventName } from '../../data/event';
+
+interface Props {
+    class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<Screen
+    tone="navy"
+    container={false}
+    class={`relative ${className}`}
+    aria-labelledby="page-title"
+    section="hero"
+>
+    <GridBackdrop />
+
+    <div class="relative flex flex-col items-center text-center">
+        <Logo asset={media.isotipo} size={148} eager />
+
+        <h1 id="page-title" class="mt-10 h-hero">
+            <span class="block">{hero.title}</span>
+            <span class="block">{hero.titleAccent}</span>
+        </h1>
+
+        <p class="mt-6 max-w-[43.24em] t-lead text-white">
+            {hero.paragraph}
+        </p>
+
+        <Countdown
+            targetIso={eventStartIso}
+            eventName={eventName}
+            boxLabels={countdownBoxLabels}
+            postEvent={countdownPostEvent}
+            eyebrow={hero.countdownEyebrow}
+            class="mt-4"
+        />
+
+        <p class="eyebrow mt-4 t-eyebrow text-white">
+            {countdownLabel}
+        </p>
+    </div>
+</Screen>

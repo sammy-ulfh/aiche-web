@@ -1,0 +1,41 @@
+---
+/**
+ * /contacto — Página de contacto (RULES §8, §9.7).
+ *
+ * Página ensamblada en S7 con composición:
+ *   1. `<ContactBlock />` — p.13 del PDF: eyebrow CONTACTO + h1
+ *      "¡TRABAJEMOS JUNTOS!" + subtítulo CONTÁCTANOS + bloque
+ *      CORREO/INSTAGRAM con foto grupal a la derecha.
+ *   2. `<JoinCta id="unete" />` — bloque "¡Súmate al capítulo!" con
+ *      ancla `#unete` (destino del botón "Únete" del nav, definido
+ *      en `src/data/nav.ts → joinHref`).
+ *
+ * Sin formulario (RULES §3.9: cero requests a terceros, sitio
+ * 100 % estático). Los enlaces son `mailto:` y `https://instagram.com/...`
+ * con asunto prellenado desde `site.ts`.
+ *
+ * Correo e Instagram derivan SIEMPRE de `site.ts` para que aparezcan
+ * idénticos en /contacto, en el CTA y en el footer (RULES §9.7).
+ *
+ * El `<h1>` es `contact.title` (RULES §13: un solo h1 por página).
+ */
+import Layout from '../layouts/Layout.astro';
+import ContactBlock from '../components/sections/ContactBlock.astro';
+import JoinCta from '../components/sections/JoinCta.astro';
+import { seoRoutes } from '../data/content';
+
+const title = seoRoutes.contact.title;
+// La descripción sale de `seoRoutes`, igual que el título: es texto
+// escrito para el buscador, no el copy visible de la página. Hasta F7
+// estas tres rutas cogían el párrafo de la diapositiva y producían
+// descripciones de 288 y de 34 caracteres.
+const description = seoRoutes.contact.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    {/* ============== Contacto (p.13) ============== */}
+<ContactBlock />
+
+    {/* ============== ¡Súmate al capítulo! con ancla #unete ============== */}
+    <JoinCta id="unete" />
+</Layout>

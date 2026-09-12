@@ -1,0 +1,82 @@
+---
+/** Hero de patrocinios, medido contra la p.10 real del PDF. */
+import Screen from '../ui/Screen.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import MediaFrame from '../media/MediaFrame.astro';
+import PackageCard from '../ui/PackageCard.astro';
+import { sponsors } from '../../data/content';
+import { sponsorCurrencySymbol, sponsorTiers } from '../../data/sponsors';
+import { media } from '../../data/media';
+
+const { class: className = '' } = Astro.props;
+---
+
+<Screen
+    tone="navy"
+    bleed
+    container={false}
+    align="start"
+    class={`print-hero p-0 ${className}`}
+    section="sponsor-hero"
+    aria-labelledby="page-title"
+>
+    <GridBackdrop center="centered" />
+
+    <div class="relative screen-canvas flex flex-1">
+        <div
+            class="grid w-full grid-cols-1 gap-10 px-6 py-12 canvas:grid-cols-[52.4em_51.6em] canvas:gap-[4em] canvas:px-0 canvas:pt-[10.75em] canvas:pb-[9.06em]"
+        >
+            <div class="flex flex-col">
+                <Eyebrow tone="navy">{sponsors.eyebrow}</Eyebrow>
+                <h1 id="page-title" class="sponsor-hero-title text-white">
+                    {sponsors.title}
+                </h1>
+                <p class="sponsor-hero-copy text-white/80">
+                    {sponsors.paragraph}
+                </p>
+
+                {/*
+                  * La etiqueta manda sobre la raya: ocupa lo que necesita y
+                  * el filete rellena el resto (p.10 del PDF).
+                  *
+                  * `min-w-0` y no `shrink-0`: `shrink-0` impedía que la
+                  * etiqueta bajara de su ancho de contenido, y con un texto
+                  * más largo que «TRES PAQUETES» se llevaba la pantalla
+                  * entera por delante — 819px sobre un viewport de 390
+                  * (medido en F6). Con `min-w-0` la composición del diseño
+                  * se mantiene idéntica con el copy real —la etiqueta sigue
+                  * cabiendo en una línea— y si algún día crece, se parte en
+                  * dos en vez de romper la pantalla. */}
+                <div class="sponsor-packages-heading flex items-center gap-[1.8em]">
+                    <p class="eyebrow t-label min-w-0 text-navy-200">
+                        {sponsors.packagesLabel}
+                    </p>
+                    <span aria-hidden="true" class="h-px flex-1 bg-navy-200/45"></span>
+                </div>
+
+                <ol
+                    id="paquetes"
+                    class="sponsor-package-grid grid scroll-mt-24 grid-cols-1 gap-4 sm:grid-cols-3 canvas:h-[7.69em] canvas:gap-[1.5em]"
+                >
+                    {sponsorTiers.map((tier) => (
+                        <PackageCard
+                            tier={tier}
+                            currencySymbol={sponsorCurrencySymbol}
+                            variant="compact"
+                            padding="compact"
+                            priceSize="md"
+                        />
+                    ))}
+                </ol>
+            </div>
+
+            <MediaFrame
+                asset={media.sponsorsHero}
+                ratio="826/683"
+                eager
+                class="border border-navy-200/45"
+            />
+        </div>
+    </div>
+</Screen>

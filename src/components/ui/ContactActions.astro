@@ -1,0 +1,125 @@
+---
+/**
+ * ContactActions — bloque reutilizable con mailto + Instagram.
+ *
+ * Reemplaza el markup compartido por `ContactBlock.astro` (filas
+ * `<dt>/<dd>`) y `JoinCta.astro` (botones grandes sobre navy).
+ *
+ * Los datos llegan agrupados desde `data/content.contactActions`; esta
+ * primitiva no importa valores de la capa `data/` (ADENDA §A4).
+ *
+ * Variantes:
+ *  - `inline` (default): par `<a>` separados por un divisor decorativo.
+ *  - `dl`: dos filas `<dt>CORREO</dt><dd>correo</dd>` + `<dt>INSTAGRAM</dt><dd>…</dd>`.
+ *    Para /contacto.
+ *  - `buttons`: dos botones grandes verticales (mobile) / horizontales (≥sm).
+ *    Para JoinCta (sobre fondo navy).
+ */
+
+/**
+ * Primitiva de `ui/`: **no importa nada de `data/`** (ADENDA §A4). Todo
+ * lo que muestra llega en la prop `contact`, que la capa que la usa
+ * (`sections/` o `layouts/`) toma de `data/content.contactActions`.
+ * Antes leía directamente de `data/site` y `data/content`.
+ */
+interface ContactInfo {
+    email: string;
+    mailto: string;
+    instagramHandle: string;
+    instagramUrl: string;
+    emailLabel: string;
+    instagramLabel: string;
+}
+
+interface Props {
+    /** Correo, Instagram y sus etiquetas. Ver `data/content.contactActions`. */
+    contact: ContactInfo;
+    variant?: 'inline' | 'dl' | 'buttons';
+    /** Separador decorativo entre los enlaces en variant='inline'. */
+    separator?: string;
+    class?: string;
+}
+
+const {
+    contact,
+    variant = 'inline',
+    separator: separatorProp,
+    class: className = '',
+} = Astro.props;
+
+const separator = separatorProp ?? '·';
+---
+
+{/* ───── variant: inline (footer y zonas densas) ───── */}
+{variant === 'inline' && (
+    <p class:list={['flex gap-3 text-xs', className]}>
+        <a
+            href={contact.mailto}
+            class="text-ink/70 underline-offset-2 hover:text-navy hover:underline focus-visible:text-navy focus-visible:underline"
+        >
+            {contact.email}
+        </a>
+        <span aria-hidden="true" class="text-ink/30">{separator}</span>
+        <a
+            href={contact.instagramUrl}
+            rel="noopener"
+            target="_blank"
+            class="text-ink/70 underline-offset-2 hover:text-navy hover:underline focus-visible:text-navy focus-visible:underline"
+        >
+            @{contact.instagramHandle}
+        </a>
+    </p>
+)}
+
+{/* ───── variant: dl (definición con label/valor) ─────
+  * Los dos enlaces van sobre fondo navy, así que llevan
+  * `focus-visible:outline-cream`: el outline global de `global.css` es
+  * navy-700 y ahí da 1,28:1 — el anillo de foco era invisible aunque el
+  * subrayado sí se viera (medido en F7). Con cream son 9,40:1. */}
+{variant === 'dl' && (
+    <dl class:list={['flex flex-col gap-[2.25em]', className]}>
+        <div class="flex flex-col">
+            <dt class="eyebrow t-label text-navy-200">{contact.emailLabel}</dt>
+            <dd class="contact-value mt-[0.225em] font-bold text-white">
+                <a
+                    href={contact.mailto}
+                    class="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-cream"
+                >{contact.email}</a>
+            </dd>
+        </div>
+        <div class="flex flex-col">
+            <dt class="eyebrow t-label text-navy-200">{contact.instagramLabel}</dt>
+            <dd class="contact-value mt-[0.225em] font-bold text-white">
+                <a
+                    href={contact.instagramUrl}
+                    rel="noopener"
+                    target="_blank"
+                    class="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-cream"
+                >{contact.instagramHandle}</a>
+            </dd>
+        </div>
+    </dl>
+)}
+
+{/* ───── variant: buttons (CTA grande sobre fondo navy) ─────
+     Medidas de la p.9 del PDF: 66px de alto, 18px de hueco entre los
+     dos, texto Arial Bold de 18.7px. El relleno lateral se expresa en
+     `em` sobre ese cuerpo, así que la caja crece con el texto. */}
+{variant === 'buttons' && (
+    <div class:list={['flex flex-col gap-3 sm:flex-row sm:gap-[1.125rem]', className]}>
+        <a
+            href={contact.mailto}
+            class="inline-flex h-[3.53em] items-center justify-center border border-white bg-white px-[2em] font-ui text-[1.169em] font-bold text-navy-900 transition-colors hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-200"
+        >
+            {contact.email}
+        </a>
+        <a
+            href={contact.instagramUrl}
+            rel="noopener"
+            target="_blank"
+            class="inline-flex h-[3.53em] items-center justify-center border border-white bg-transparent px-[2em] font-ui text-[1.169em] text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-200"
+        >
+            @{contact.instagramHandle}
+        </a>
+    </div>
+)}

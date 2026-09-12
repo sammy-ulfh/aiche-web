@@ -1,0 +1,78 @@
+---
+/**
+ * NavDropdown — un item del Nav que además tiene subpáginas.
+ *
+ * **F5b: el padre es un enlace, no un botón.** Los tres items con
+ * submenú («Acerca de nosotros», «Participaciones», «Patrocinios»)
+ * tienen página propia, así que pulsarlos lleva a esa página y ya no
+ * llevan el «+» del PDF. El submenú se despliega solo, en CSS, al pasar
+ * el ratón o al entrar el foco (`:hover` / `:focus-within`, ver
+ * `global.css`): cero JavaScript para abrirlo y cero estado que se
+ * pueda quedar desincronizado.
+ *
+ * Accesibilidad (RULES §7.2): con teclado, al llegar al enlace padre el
+ * `:focus-within` abre el panel y los hijos entran en el orden natural
+ * de tabulación. Sin JS y sin ratón el submenú sigue siendo alcanzable.
+ *
+ * `isCurrent` (página actual exacta) → `aria-current="page"`.
+ * `isInSection` (subruta) → `aria-current="location"`: "estás en esta
+ *   sección" sin afirmar que es la página.
+ */
+import type { NavItem } from '../../data/nav';
+
+interface Props {
+    item: NavItem;
+    currentPath: string;
+}
+
+const { item, currentPath } = Astro.props;
+const isCurrent = currentPath === item.href;
+const isInSection = !isCurrent && currentPath.startsWith(`${item.href}/`);
+const ariaCurrent = isCurrent ? 'page' : isInSection ? 'location' : undefined;
+// id estable basado en el href, por si hace falta enlazar el panel desde fuera.
+const panelId = `nav-panel-${item.href.replace(/[^a-z0-9]/gi, '-')}`;
+---
+
+<li class="relative flex items-stretch" data-dropdown>
+    <a
+        href={item.href}
+        class:list={[
+            'relative flex h-full items-center font-ui text-[0.975rem] font-bold transition-colors',
+            // Ver Nav.astro: en la sección actual el item ya es navy y
+            // `hover:text-navy` no cambiaba nada (F6).
+            isCurrent || isInSection
+                ? 'text-navy hover:text-navy-700 focus-visible:text-navy-700'
+                : 'hover:text-navy focus-visible:text-navy',
+            (isCurrent || isInSection) &&
+                'after:absolute after:inset-x-0 after:bottom-[0.8125rem] after:h-[3px] after:bg-navy-500 after:content-[\"\"]',
+        ]}
+        aria-current={ariaCurrent}
+    >
+        {item.label}
+    </a>
+
+    <ul
+        id={panelId}
+        class="nav-submenu absolute left-0 top-full z-30 min-w-[16rem] border border-white/15 bg-navy-900 py-2 text-white shadow-2xl"
+        data-dropdown-panel
+    >
+        {item.children?.map((child) => {
+            const childIsCurrent = currentPath === child.href;
+            return (
+                <li>
+                    <a
+                        href={child.href}
+                        class:list={[
+                            'block px-4 py-2 text-sm transition-colors',
+                            'hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream',
+                            childIsCurrent && 'text-cream',
+                        ]}
+                        aria-current={childIsCurrent ? 'page' : undefined}
+                    >
+                        {child.label}
+                    </a>
+                </li>
+            );
+        })}
+    </ul>
+</li>

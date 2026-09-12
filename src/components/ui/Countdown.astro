@@ -1,0 +1,157 @@
+---
+/**
+ * Countdown — contador regresivo al 27 de marzo de 2027.
+ *
+ * RULES §15:
+ *  - Fecha objetivo definida una sola vez en `src/data/site.ts`.
+ *  - Valor inicial RENDERIZADO EN BUILD (cero flash de 00).
+ *  - Cajas DÍAS / HORAS / MIN / SEG con `tabular-nums` (utilidad
+ *    `.stat-num` de global.css) para que no salten de ancho.
+ *  - `aria-live="off"` en los números (no se lee cada segundo)
+ *    + texto accesible alterno en `<span data-cd-sr>` que se
+ *    actualiza junto con los números.
+ *  - Estado post-evento: mensaje predefinido, NUNCA números
+ *    negativos. Si la fecha ya pasó al build, se muestra directo.
+ *  - El JS vive en `src/scripts/countdown.ts` (vanilla TS, IIFE):
+ *    un solo `setInterval(1s)`, pausa con `visibilitychange` y
+ *    con un `IntersectionObserver` (al salir del viewport).
+ *  - Al reanudar, recalcula desde `Date.now()` (sin drift).
+ *
+ * Primitiva de `ui/`: **no importa nada de `data/`** (ADENDA §A4). La
+ * fecha, el nombre del evento y las etiquetas se los pasa quien lo usa
+ * (hoy `sections/Hero.astro`). Antes leía directamente de `data/site`,
+ * lo que ataba una primitiva a un evento concreto y rompía la dirección
+ * única de dependencias.
+ *
+ * Props:
+ *  - `targetIso`: momento del evento en ISO con zona. **Requerido.**
+ *  - `eventName`: nombre del evento, para el texto accesible alterno.
+ *  - `boxLabels`: las 4 etiquetas de las cajas, en orden.
+ *  - `postEvent`: mensaje cuando ya pasó la fecha.
+ *  - `eyebrow`: etiqueta superior (default "FALTAN" según RULES §9.1).
+ *  - `tone`: "navy" (texto blanco sobre fondo navy) o "light"
+ *    (texto navy sobre fondo claro).
+ */
+
+interface Props {
+    targetIso: string;
+    eventName: string;
+    boxLabels: readonly string[];
+    postEvent: string;
+    eyebrow?: string;
+    tone?: 'navy' | 'light';
+    class?: string;
+}
+
+const {
+    targetIso,
+    eventName,
+    boxLabels,
+    postEvent,
+    eyebrow = 'FALTAN',
+    tone = 'navy',
+    class: className = '',
+} = Astro.props;
+
+// Cálculo en build (cero flash).
+const targetMs = new Date(targetIso).getTime();
+const now = Date.now();
+const diff = targetMs - now;
+
+const isOver = diff <= 0;
+const totalSeconds = Math.max(0, Math.floor(diff / 1000));
+const days = Math.floor(totalSeconds / 86400);
+const hours = Math.floor((totalSeconds % 86400) / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+const seconds = totalSeconds % 60;
+
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
+const toneClasses = {
+    navy: {
+        box: 'border border-navy-200 bg-white/8',
+        num: 'text-white',
+        unit: 'text-navy-200',
+        eyebrow: 'text-white',
+        post: 'text-white',
+    },
+    light: {
+        box: 'border border-navy/25 bg-white/60',
+        num: 'text-navy',
+        unit: 'text-navy-700',
+        eyebrow: 'text-navy',
+        post: 'text-navy',
+    },
+} as const;
+const c = toneClasses[tone];
+---
+
+<div
+    data-countdown
+    data-target={targetIso}
+    data-post-event={postEvent}
+    class:list={['flex w-full flex-col items-center', className]}
+>
+    {/* El eyebrow es «FALTAN»: una vez pasada la fecha deja de tener
+      * sentido y se oculta junto con las cajas, o se leería
+      * «FALTAN / ¡Ya estamos compitiendo!» (F6). */}
+    <p data-cd-eyebrow class:list={['eyebrow t-eyebrow', c.eyebrow]} hidden={isOver}>{eyebrow}</p>
+
+    {/* SR-only: texto accesible que se actualiza con el tiempo restante. */}
+    <span data-cd-sr class="sr-only">
+        {
+            isOver
+                ? postEvent
+                : `Faltan ${days} días, ${hours} horas, ${minutes} minutos y ${seconds} segundos para ${eventName}.`
+        }
+    </span>
+
+    {/* Cajas: DÍAS / HORAS / MIN / SEG. aria-live="off" por RULES §13. */}
+    <ol
+        data-cd-boxes
+        class="mt-4 grid w-full max-w-[48.25em] grid-cols-2 gap-4 sm:grid-cols-4"
+        hidden={isOver}
+    >
+        <li class:list={['flex h-[8.625em] flex-col items-center justify-center gap-2', c.box]}>
+            <span
+                data-cd-days
+                class:list={['stat-num font-ui t-num font-bold', c.num]}
+                aria-live="off"
+            >{days}</span>
+            <span class:list={['eyebrow eyebrow-unit t-label', c.unit]}>{boxLabels[0]}</span>
+        </li>
+        <li class:list={['flex h-[8.625em] flex-col items-center justify-center gap-2', c.box]}>
+            <span
+                data-cd-hours
+                class:list={['stat-num font-ui t-num font-bold', c.num]}
+                aria-live="off"
+            >{pad2(hours)}</span>
+            <span class:list={['eyebrow eyebrow-unit t-label', c.unit]}>{boxLabels[1]}</span>
+        </li>
+        <li class:list={['flex h-[8.625em] flex-col items-center justify-center gap-2', c.box]}>
+            <span
+                data-cd-minutes
+                class:list={['stat-num font-ui t-num font-bold', c.num]}
+                aria-live="off"
+            >{pad2(minutes)}</span>
+            <span class:list={['eyebrow eyebrow-unit t-label', c.unit]}>{boxLabels[2]}</span>
+        </li>
+        <li class:list={['flex h-[8.625em] flex-col items-center justify-center gap-2', c.box]}>
+            <span
+                data-cd-seconds
+                class:list={['stat-num font-ui t-num font-bold', c.num]}
+                aria-live="off"
+            >{pad2(seconds)}</span>
+            <span class:list={['eyebrow eyebrow-unit t-label', c.unit]}>{boxLabels[3]}</span>
+        </li>
+    </ol>
+
+    {/* Estado post-evento: oculto inicialmente, lo muestra el JS si diff<=0. */}
+    <p
+        data-cd-post
+        class:list={['mt-5 h-card-sm', c.post]}
+        hidden={!isOver}
+    >
+        {isOver ? postEvent : ''}
+    </p>
+</div>

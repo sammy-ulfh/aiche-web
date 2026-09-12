@@ -1,0 +1,65 @@
+---
+/**
+ * / — Inicio.
+ *
+ * Ensambla las secciones en este orden:
+ *   1. Hero (GridBackdrop + Countdown) — p.1
+ *   2. About — p.6: la presentación del capítulo con su video
+ *   3. ParticipationsOverview — p.7: próximo evento, competencias y video
+ *   4. SponsorTeaser — p.10 en resumen, con CTA a /patrocinios
+ *   5. JoinCta — p.9, "¡Súmate al capítulo!"
+ *
+ * **Cambio de estructura (D-153).** Antes el home llevaba un *teaser* de
+ * "Acerca de" y una sección `NextEvent` propias, y las diapositivas
+ * completas de las p.6 y p.7 vivían en `/acerca` y `/participaciones`.
+ * Ahora las dos diapositivas reales son la continuación del hero, que es
+ * como las encadena el PDF, y `NextEvent` desaparece: su tarjeta de
+ * evento y su lista de competencias ya están dentro del bloque de
+ * Participaciones, así que salían dos veces seguidas.
+ *
+ * El `h1` de la página es el del `Hero`. `About` y
+ * `ParticipationsOverview` reciben `headingLevel="h2"` para no crear un
+ * segundo ni un tercer `h1` (RULES §13).
+ *
+ * El Footer lo renderiza el Layout (RULES §3.1, §7).
+ *
+ * SEO: Layout ya inyecta title/description/canonical/OG. Aquí añadimos
+ * JSON-LD para el evento (RULES §14), tomados del data layer para
+ * evitar duplicación.
+ */
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/sections/Hero.astro';
+import About from '../components/sections/About.astro';
+import ParticipationsOverview from '../components/sections/ParticipationsOverview.astro';
+import SponsorTeaser from '../components/sections/SponsorTeaser.astro';
+import JoinCta from '../components/sections/JoinCta.astro';
+import { seoRoutes } from '../data/content';
+import { eventJsonLd } from '../data/seo';
+
+const title = seoRoutes.home.title;
+const description = seoRoutes.home.description;
+---
+
+<Layout title={title} description={description} mainLabel="page-title">
+    <Hero />
+
+    <About headingLevel="h2" />
+
+    <ParticipationsOverview headingLevel="h2" />
+
+    <SponsorTeaser />
+
+    <JoinCta />
+
+    {/* JSON-LD `Event` (RULES §14). `Organization` lo inyecta `Layout`
+         globalmente — no se duplica aquí. */}
+    <script
+        type="application/ld+json"
+        set:html={JSON.stringify(eventJsonLd)}
+        is:inline></script>
+
+    {/* Script del contador. Se importa una sola vez. */}
+    <script>
+        import '../scripts/countdown.ts';
+    </script>
+</Layout>

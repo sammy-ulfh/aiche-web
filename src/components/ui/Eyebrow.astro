@@ -1,0 +1,39 @@
+---
+/**
+ * Eyebrow — etiqueta corta que precede a un título.
+ * Reutiliza la utilidad `.eyebrow` de global.css.
+ *
+ * Variantes:
+ *  - `tone`: "default" (navy-700 sobre crema) | "navy" (navy-200 sobre
+ *    fondo oscuro) | "light" (white/80).
+ *  - `as`: elemento a renderizar (default "p").
+ *
+ * Contraste (S8, RULES §13):
+ *  - Antes: tone="navy" usaba `text-navy-400` (#4a8fd4) sobre `bg-navy`
+ *    (#123f72) → 3.12:1 (falla AA para texto normal). F5 lo unifica con
+ *    `navy-200`, el tono medido para estas etiquetas en el PDF.
+ */
+interface Props {
+    tone?: 'default' | 'navy' | 'light';
+    as?: 'p' | 'span' | 'div';
+    class?: string;
+}
+
+const props = Astro.props as Props;
+const {
+    tone = 'default',
+    as: Tag = 'p',
+    class: className = '',
+} = props;
+
+const color =
+    tone === 'navy'
+        ? 'text-navy-200'
+        : tone === 'light'
+        ? 'text-white/80'
+        : 'text-navy-700';
+---
+
+<Tag class:list={['eyebrow t-eyebrow', color, className]}>
+    <slot />
+</Tag>

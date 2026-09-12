@@ -1,0 +1,123 @@
+---
+/**
+ * CompetitionInfo — el mismo copy con las dos composiciones del PDF:
+ * bandas navy en Southwest 2027 y dos columnas con galería en Patrocinios.
+ */
+import Screen from '../ui/Screen.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import GridBackdrop from '../ui/GridBackdrop.astro';
+import MediaFrame from '../media/MediaFrame.astro';
+import Img from '../media/Img.astro';
+import { competition } from '../../data/content';
+import { media } from '../../data/media';
+
+interface Props {
+    variant?: 'navy' | 'cream';
+    id?: string;
+    class?: string;
+}
+
+const {
+    variant = 'navy',
+    id,
+    class: className = '',
+} = Astro.props as Props;
+const isNavy = variant === 'navy';
+const WhatHeading = isNavy ? 'h1' : 'h3';
+const WhyHeading = isNavy ? 'h2' : 'h3';
+const labelledBy = isNavy ? 'page-title' : 'competition-info-heading';
+---
+
+<Screen
+    tone={variant}
+    id={id}
+    bleed
+    container={false}
+    align="start"
+    class={`p-0 ${className}`}
+    aria-labelledby={labelledBy}
+    section="competition"
+>
+    <GridBackdrop tone={variant} center="centered" />
+
+    {!isNavy && (
+        <h2 id="competition-info-heading" class="sr-only">
+            {competition.eyebrow}
+        </h2>
+    )}
+
+    <div
+        class:list={[
+            'relative w-full flex-1',
+            isNavy
+                ? 'competition-layout-navy'
+                : 'competition-layout-cream screen-canvas',
+        ]}
+    >
+        {!isNavy && (
+            <Eyebrow tone="default" class="competition-eyebrow">
+                {competition.eyebrow}
+            </Eyebrow>
+        )}
+
+        <article class="competition-what">
+            <WhatHeading
+                id={isNavy ? 'page-title' : undefined}
+                class={isNavy ? 'competition-navy-primary' : 'h-card text-chrome-ink'}
+            >
+                {competition.whatTitle}
+            </WhatHeading>
+            <p
+                lang="es"
+                class={isNavy
+                    ? 'competition-navy-body competition-navy-what-body'
+                    : 'competition-cream-body text-chrome-ink/70'}
+            >
+                {competition.whatBody}
+            </p>
+        </article>
+
+        <article class="competition-why">
+            <WhyHeading
+                class={isNavy ? 'competition-navy-secondary' : 'h-card text-chrome-ink'}
+            >
+                <span>{competition.whyTitle}</span>
+            </WhyHeading>
+            <p
+                lang="es"
+                class={isNavy
+                    ? 'competition-navy-body competition-navy-why-body'
+                    : 'competition-cream-body text-chrome-ink/70'}
+            >
+                {competition.whyBody}
+            </p>
+        </article>
+
+        {isNavy ? (
+            <Img
+                src={media.competitionCarCutout.src}
+                alt={media.competitionCarCutout.alt}
+                width={media.competitionCarCutout.w}
+                height={media.competitionCarCutout.h}
+                loading="lazy"
+                sizes="(min-width: 80rem) 26vw, 80vw"
+                class="competition-car-cutout"
+            />
+        ) : (
+            <ul
+                class="competition-gallery grid grid-cols-1 gap-4 sm:grid-cols-3 canvas:grid-cols-[repeat(3,34em)] canvas:gap-[3em]"
+                aria-label={`Galería — ${media.competitionGallery.length} imágenes`}
+            >
+                {media.competitionGallery.map((asset) => (
+                    <li>
+                        <MediaFrame
+                            asset={asset}
+                            ratio="544/300"
+                            sizes="(min-width: 80rem) 29vw, 88vw"
+                        />
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+</Screen>

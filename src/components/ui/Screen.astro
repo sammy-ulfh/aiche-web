@@ -1,0 +1,92 @@
+---
+/**
+ * Screen — una diapositiva del PDF = una pantalla (ADENDA §A3).
+ *
+ * Es el **único** componente del proyecto que define alto de pantalla y
+ * factor de escala. Ninguna página ni sección lo hace por su cuenta.
+ * Sustituye a `ui/Section.astro`, que aplicaba padding fijo (`py-20
+ * md:py-28`) sin ninguna relación con la altura del viewport.
+ *
+ * ── Cómo escala ──────────────────────────────────────────────────────
+ * La clase `.screen` (en `global.css`) fija `font-size: var(--screen-fs)`
+ * y redefine la escala de espaciado, tipografía y anchos de Tailwind en
+ * unidades derivadas de ese mismo valor. Por eso las secciones siguen
+ * escribiéndose con utilidades normales (`py-20`, `gap-6`, `text-lg`) y
+ * escalan en bloque igualmente: no hay que reescribir clases.
+ *
+ * ── Válvula de escape ────────────────────────────────────────────────
+ * `min-height`, nunca `height`. Si el contenido no cabe ni al mínimo de
+ * escala, la pantalla **crece** y el scroll fluye. No hay `overflow:
+ * hidden` en ninguna parte: cortar contenido está prohibido por §A3.
+ *
+ * Props (compatibles con el antiguo `Section.astro`):
+ *  - `tone`: "default"/"cream" (crema/tinta) | "navy" (navy/blanco).
+ *  - `container`: `false` para saltarse la caja de contenido centrada.
+ *  - `bleed`: `true` quita el margen lateral de 96px del lienzo
+ *    (secciones cuyo contenido llega al borde).
+ *  - `fit`: `false` para un bloque que NO es una diapositiva y no debe
+ *    reservar una pantalla completa. Sigue escalando igual.
+ *  - `as`: etiqueta semántica (default "section").
+ *  - `section`: se emite como `data-section` para `scripts/capture.mjs`
+ *    y `scripts/check-overflow.mjs`.
+ *
+ * Cualquier otro atributo (`aria-labelledby`, `role`, `data-*`) se pasa
+ * al elemento. El antiguo `Section.astro` los descartaba en silencio:
+ * el `aria-labelledby` de `CompetitionInfo` nunca llegaba al DOM.
+ */
+interface Props {
+    tone?: 'default' | 'navy' | 'cream';
+    container?: boolean;
+    bleed?: boolean;
+    /** `false` = bloque corto que no reserva una pantalla entera. */
+    fit?: boolean;
+    /** Alineación vertical del contenido dentro de la pantalla. */
+    align?: 'center' | 'start';
+    as?: 'section' | 'header' | 'footer' | 'div';
+    id?: string;
+    section?: string;
+    class?: string;
+    /** Cualquier otro atributo (aria-*, role, data-*) pasa al elemento. */
+    [key: string]: unknown;
+}
+
+const props = Astro.props as Props;
+const {
+    tone = 'default',
+    container = true,
+    bleed = false,
+    fit = true,
+    align = 'center',
+    as: Tag = 'section',
+    id,
+    section,
+    class: className = '',
+    ...rest
+} = props;
+
+const toneClasses = tone === 'navy' ? 'bg-navy text-white' : 'bg-cream text-ink';
+---
+
+<Tag
+    {...rest}
+    id={id}
+    data-section={section}
+    data-variant={tone}
+    data-screen={fit ? 'fit' : 'auto'}
+    class:list={[
+        'screen relative isolate flex flex-col',
+        align === 'center' ? 'justify-center' : 'justify-start',
+        !fit && 'min-h-0',
+        toneClasses,
+        !bleed && 'screen-gutter',
+        className,
+    ]}
+>
+    {container ? (
+        <div class="screen-canvas">
+            <slot />
+        </div>
+    ) : (
+        <slot />
+    )}
+</Tag>
