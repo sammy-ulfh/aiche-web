@@ -11,28 +11,26 @@
  *      RULES §13 prohíbe quitar el outline; esto lo verifica en vez de
  *      confiar en que nadie lo haya hecho.
  *   2. **Enlace activo.** `aria-current="page"` en el item del nav que
- *      corresponde a la ruta, y en ningún otro (RULES §7.4).
- *   3. **Submenú de escritorio.** Cerrado de partida (`display:none`), se
- *      abre al enfocar el padre con teclado (`:focus-within`) y sus hijos
- *      entran en el orden de tabulación (RULES §7.2, D-138).
- *   4. **Menú móvil.** `aria-expanded`, foco que entra al panel, focus
+ *      corresponde a la ruta, y en ningún otro (RULES §7.4). En una
+ *      subpágina sin item propio, `location` en el item de su sección.
+ *   3. **Menú móvil.** `aria-expanded`, foco que entra al panel, focus
  *      trap que da la vuelta sin escaparse, `Escape` que cierra y
  *      devuelve el foco a la hamburguesa, y scroll del body bloqueado
  *      (RULES §7.3).
- *   5. **Recorrido completo por teclado.** Se tabula por toda la página y
+ *   4. **Recorrido completo por teclado.** Se tabula por toda la página y
  *      se comprueba que el foco nunca se pierde (nunca vuelve a `body`
  *      antes de tiempo), que el primer parada es el skip link y que se
  *      llega hasta el footer.
- *   6. **Video antes de cargar y en pausa.** Sin `src` ni `<source>` hasta
+ *   5. **Video antes de cargar y en pausa.** Sin `src` ni `<source>` hasta
  *      entrar al viewport, con su capa de póster `<img loading="lazy">`
  *      puesta (desde F7 el póster ya no va en el atributo `poster`, que
  *      el navegador descarga siempre); al entrar, fuentes inyectadas; al
  *      salir, en pausa (RULES §11.2).
- *   7. **Contador después de la fecha.** Se reescribe `data-target` al
+ *   6. **Contador después de la fecha.** Se reescribe `data-target` al
  *      pasado antes de que corra el script: cajas ocultas, mensaje
  *      post-evento visible, eyebrow «FALTAN» oculto y **cero números
  *      negativos** en la pantalla (RULES §15).
- *   8. **Textos más largos de lo previsto.** Se sustituyen títulos y
+ *   7. **Textos más largos de lo previsto.** Se sustituyen títulos y
  *      cuerpos por versiones el triple de largas, con una palabra
  *      inseparable de 40 caracteres, y se comprueba que no aparece
  *      scroll horizontal ni texto recortado.
@@ -168,38 +166,21 @@ async function checkActiveLink(page, route) {
     // El nav duplica enlaces (escritorio + panel móvil): lo que importa es que
     // TODOS los marcados apunten a la ruta actual y que haya al menos uno.
     const wrong = pages.filter((m) => m.href !== r.here);
-    if (!pages.length) fail(`[activo] ${route}: ningún enlace con aria-current="page"`);
-    else if (wrong.length) fail(`[activo] ${route}: ${wrong.length} marcado(s) apuntan a otra ruta`);
+    if (!pages.length) {
+        // Subpágina sin item propio en el menú (`/participaciones/southwest-2027`):
+        // lo correcto es que su sección, y sólo ella, quede marcada `location`.
+        const locs = r.marked.filter((m) => m.value === 'location');
+        const inSection = locs.filter((m) => r.here.startsWith(`${m.href}/`));
+        if (locs.length && inSection.length === locs.length) {
+            ok(`[activo] ${route}: sección marcada como location (${locs.length})`);
+        } else {
+            fail(`[activo] ${route}: ningún enlace con aria-current="page" ni sección marcada`);
+        }
+    } else if (wrong.length) fail(`[activo] ${route}: ${wrong.length} marcado(s) apuntan a otra ruta`);
     else ok(`[activo] ${route}: ${pages.length} enlace(s) correctos`);
 }
 
-/* ---------- 3. submenú de escritorio ------------------------------ */
-
-async function checkSubmenu(page) {
-    const r = await page.evaluate(() => {
-        const dd = document.querySelector('[data-dropdown]');
-        if (!dd) return { error: 'no hay [data-dropdown]' };
-        const panel = dd.querySelector('[data-dropdown-panel]');
-        const parent = dd.querySelector('a');
-        const closed = getComputedStyle(panel).display;
-        parent.focus({ preventScroll: true });
-        const openOnFocus = getComputedStyle(panel).display;
-        const childrenReachable = [...panel.querySelectorAll('a[href]')].every(
-            (a) => a.offsetParent !== null || getComputedStyle(a).display !== 'none',
-        );
-        parent.blur();
-        const closedAgain = getComputedStyle(panel).display;
-        return { closed, openOnFocus, closedAgain, childrenReachable, kids: panel.querySelectorAll('a').length };
-    });
-    if (r.error) return fail(`[submenú] ${r.error}`);
-    if (r.closed !== 'none') fail(`[submenú] arranca abierto (display:${r.closed})`);
-    else if (r.openOnFocus === 'none') fail('[submenú] no se abre al enfocar el padre con teclado');
-    else if (!r.childrenReachable) fail('[submenú] los hijos no son alcanzables con el panel abierto');
-    else if (r.closedAgain !== 'none') fail('[submenú] no se cierra al salir el foco');
-    else ok(`[submenú] cerrado → abre con :focus-within (${r.kids} hijos) → cierra`);
-}
-
-/* ---------- 4. menú móvil ----------------------------------------- */
+/* ---------- 3. menú móvil ----------------------------------------- */
 
 async function checkMobileMenu(page) {
     const toggle = page.locator('[data-mobile-toggle]').first();
@@ -269,7 +250,7 @@ async function checkMobileMenu(page) {
         ok('[móvil] Escape cierra, devuelve el foco y libera el scroll');
 }
 
-/* ---------- 5. recorrido completo por teclado --------------------- */
+/* ---------- 4. recorrido completo por teclado --------------------- */
 
 async function checkTabOrder(page, route, label) {
     /**
@@ -323,7 +304,7 @@ async function checkTabOrder(page, route, label) {
         ok(`[teclado] ${label} ${route}: ${seen.length} paradas visibles, skip link primero, llega al footer`);
 }
 
-/* ---------- 6. video antes de cargar / en pausa ------------------- */
+/* ---------- 5. video antes de cargar / en pausa ------------------- */
 
 async function checkVideo(page, route) {
     const start = await page.evaluate(() => {
@@ -385,7 +366,7 @@ async function checkVideo(page, route) {
     await page.evaluate(() => window.scrollTo(0, 0));
 }
 
-/* ---------- 7. contador después de la fecha ----------------------- */
+/* ---------- 6. contador después de la fecha ----------------------- */
 
 async function checkCountdownPostEvent(page, base) {
     // Reescribir `data-target` al pasado ANTES de que corra el script del
@@ -401,7 +382,7 @@ async function checkCountdownPostEvent(page, base) {
             true,
         );
     });
-    await page.goto(base + '/', { waitUntil: 'networkidle' });
+    await page.goto(base + '/', { waitUntil: 'load' });
     await page.waitForTimeout(1400);
 
     const r = await page.evaluate(() => {
@@ -427,7 +408,7 @@ async function checkCountdownPostEvent(page, base) {
         ok(`[contador] post-evento: cajas ocultas, sin negativos, mensaje «${r.postText}»`);
 }
 
-/* ---------- 8. hover -------------------------------------------- */
+/* ---------- hover ----------------------------------------------- */
 
 /**
  * Cada elemento interactivo debe reaccionar al ratón, no sólo al foco.
@@ -489,7 +470,7 @@ async function checkHover(page, route, label) {
     else ok(`[hover] ${label} ${route}: ${Math.min(targets.length, 12)} elementos reaccionan al ratón`);
 }
 
-/* ---------- 8. textos más largos de lo previsto ------------------- */
+/* ---------- 7. textos más largos de lo previsto ------------------- */
 
 async function checkLongText(page, route, label) {
     const grew = await page.evaluate(() => {
@@ -552,7 +533,10 @@ for (const [label, viewport] of [
     console.log(`┌─ ${label} ${viewport.width}×${viewport.height}`);
 
     for (const route of ROUTES) {
-        await page.goto(base + route, { waitUntil: 'networkidle' });
+        // `load` y no `networkidle`: el video de `/participaciones/` está en
+        // el primer viewport y descarga en streaming, así que la red nunca
+        // queda ociosa y `goto` agotaba el timeout.
+        await page.goto(base + route, { waitUntil: 'load' });
         await page.waitForTimeout(200);
         // El orden NO es indiferente: `checkFocusRings` enfoca y desenfoca
         // cada elemento, y eso deja el punto de partida de la navegación
@@ -567,15 +551,18 @@ for (const [label, viewport] of [
         console.log(`│  · ${route}`);
     }
 
-    // Estados propios de cada régimen.
-    await page.goto(base + '/', { waitUntil: 'networkidle' });
-    if (viewport.width >= 1280) await checkSubmenu(page);
-    else await checkMobileMenu(page);
+    // Estado propio del régimen apilado: el menú móvil.
+    if (viewport.width < 1280) {
+        await page.goto(base + '/', { waitUntil: 'load' });
+        await checkMobileMenu(page);
+    }
 
     // Texto largo: en las ocho rutas, no en una muestra. Es barato y es
     // justo el tipo de defecto que aparece sólo en la página que no miras.
     for (const route of ROUTES) {
-        await page.goto(base + route, { waitUntil: 'networkidle' });
+        await page.goto(base + route, { waitUntil: 'load' });
+        // Se mide layout: con la webfont ya aplicada.
+        await page.evaluate(() => document.fonts.ready);
         await checkLongText(page, route, label);
     }
 

@@ -114,7 +114,13 @@ const starAngles = [0, 45, 90, 135];
                     </HeadingTag>
                 </header>
 
-                <div class="mt-7 border border-navy-200 p-7">
+                {/* En el lienzo, padding lateral de 1.25 u, no 1.75: con 1.75
+                  * la línea «comunidad con el deseo de» ocupaba el 99.5 % del
+                  * ancho y, según cómo redondeara la tipografía en cada
+                  * tamaño, «de» saltaba de línea y la pregunta pasaba a
+                  * cuatro (+28px: la pantalla desbordaba a 1600×900, 1440×900
+                  * y 1280×800). Apilado no hay alto que cuadrar. */}
+                <div class="mt-7 border border-navy-200 p-7 canvas:px-5">
                     <p class="quote-serif t-quote text-center text-white">
                         {about.question}
                     </p>

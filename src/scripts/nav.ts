@@ -16,12 +16,8 @@
  *  2. Menú móvil (RULES §7.3): hamburguesa + panel, focus trap simple,
  *     bloqueo de scroll del body.
  *
- * **Los submenús de escritorio ya no llevan JS.** En F5b los tres items
- * con subpáginas pasaron a ser enlaces directos y su panel se despliega
- * con `:hover` / `:focus-within` en CSS (`global.css`). Eso retira ~70
- * líneas de estado, ARIA manual y listeners de documento, y elimina de
- * paso el acordeón del panel móvil, cuyos hijos van ahora siempre a la
- * vista.
+ * **El menú no tiene submenús**: todos sus items son enlaces directos,
+ * así que no hay desplegables ni acordeones que gestionar.
  *
  * Nota de mejora progresiva: el nav es navegable sin JS. Todos los
  * enlaces son `<a>` en el marcado; lo único que aporta el JS es el

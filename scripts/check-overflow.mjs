@@ -213,7 +213,11 @@ for (const vp of VIEWPORTS) {
     );
 
     for (const route of ROUTES) {
-        await page.goto(base + route, { waitUntil: 'networkidle' });
+        // `load` y no `networkidle` (el video de `/participaciones/` descarga
+        // en streaming y la red nunca queda ociosa). `fonts.ready` cubre lo
+        // que `networkidle` daba de paso: medir con la webfont ya aplicada.
+        await page.goto(base + route, { waitUntil: 'load' });
+        await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(320);
         const d = await page.evaluate(PROBE, { slack: SLACK, checkHeight: !vp.stacked });
         rows.push({ vp: vp.label.trim(), route, ...d });

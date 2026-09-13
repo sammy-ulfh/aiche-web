@@ -14,31 +14,22 @@
  */
 
 import { contactMailto, contactInstagramUrl } from './site';
-import { eventName } from './event';
 
 export interface NavItem {
     /** Etiqueta visible en español. */
     label: string;
-    /** Ruta absoluta (`/equipo`) o ancla (`#paquetes`). */
+    /** Ruta absoluta sin barra final (`/equipo`). */
     href: string;
-    /**
-     * `true` = el item tiene subpáginas. Desde F5b **no** dibuja ningún
-     * "+": el padre es un enlace directo a su propia página y el submenú
-     * se despliega al pasar el ratón o al entrar el foco.
-     */
-    hasSubmenu?: boolean;
-    /** Sub-elementos cuando `hasSubmenu`. */
-    children?: readonly NavItem[];
 }
 
 /** Enlace del botón "Únete" del nav (RULES §8: apunta a /contacto#unete). */
-export const joinHref = '/contacto/index.html';
+export const joinHref = '/contacto#unete';
 
 /** Etiqueta del botón "Únete" (esquina superior derecha del nav + final del mobile menu). */
 export const joinLabel = 'Únete';
 
 /** Bloque izquierdo del nav: icono de casa + etiqueta. */
-export const homeLink = { label: 'Inicio', href: '/index.html' } as const;
+export const homeLink = { label: 'Inicio', href: '/' } as const;
 
 /** Identidad (isotipo + wordmark + bajada) del centro del nav. */
 export const brand = {
@@ -85,31 +76,24 @@ export const navContact = {
 
 /** Estructura completa del menú principal. */
 export const mainNav: readonly NavItem[] = [
-    // El primer item del menú es la presentación del equipo: retratos de la
-    // mesa directiva y foto de grupo (p.13 del PDF). No lleva submenú porque
-    // no tiene subpáginas — antes era «Acerca de nosotros» con `/acerca/equipo`
-    // colgando, y ni la etiqueta ni el destino decían lo que había dentro.
-    { label: 'Nuestro equipo', href: '/equipo/index.html' },
-    {
-        label: 'Participaciones',
-        href: '/participaciones/index.html',
-        hasSubmenu: true,
-        children: [
-            {
-                label: eventName,
-                href: '/participaciones/southwest-2027',
-            },
-        ],
-    },
-    {
-        label: 'Patrocinios',
-        href: '/patrocinios/index.html',
-        hasSubmenu: true,
-        children: [
-            { label: 'Tres paquetes', href: '/patrocinios#paquetes' },
-            { label: 'Qué recibe tu empresa', href: '/patrocinios#beneficios' },
-            { label: 'La competencia', href: '/patrocinios#competencia' },
-        ],
-    },
-    { label: 'Contacto', href: '/contacto/index.html' },
+    // Sin submenús: cada item es un enlace directo a su página. Los
+    // subenlaces y su desplegable se retiraron por decisión del usuario.
+    // El primer item es la presentación del equipo: retratos de la mesa
+    // directiva y foto de grupo (p.13 del PDF).
+    { label: 'Nuestro equipo', href: '/equipo' },
+    { label: 'Participaciones', href: '/participaciones' },
+    { label: 'Patrocinios', href: '/patrocinios' },
+    { label: 'Contacto', href: '/contacto' },
 ] as const;
+
+/**
+ * Valor de `aria-current` de un item del menú para la ruta actual (sin
+ * barra final): `page` en su propia página y `location` en una subruta
+ * suya —`/participaciones/southwest-2027` marca «Participaciones» como
+ * sección—. Lo comparten el Nav de escritorio y el panel móvil.
+ */
+export function navCurrent(currentPath: string, href: string): 'page' | 'location' | undefined {
+    if (currentPath === href) return 'page';
+    if (href !== '/' && currentPath.startsWith(`${href}/`)) return 'location';
+    return undefined;
+}

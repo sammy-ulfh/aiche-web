@@ -33,19 +33,16 @@
  *    listeners de scroll (RULES §7.1).
  *  - Altura fija reservada desde el primer render → cero CLS (§7.7).
  *  - `aria-current="page"` desde `Astro.url.pathname` (§7.4).
- *  - Submenús accesibles (§7.2) y menú móvil con focus trap (§7.3).
+ *  - Menú móvil con focus trap (§7.3).
  *
- * **F5b — los items con subpágina son enlaces directos.** «Acerca de
- * nosotros», «Participaciones» y «Patrocinios» tienen página propia:
- * pulsarlos navega a ella y ya no llevan el «+» que dibuja el PDF. El
- * submenú se abre en CSS (`:hover` / `:focus-within`). Es la única
- * desviación deliberada del nav respecto al diseño y responde a una
- * petición explícita del usuario (D-138).
+ * **Sin submenús.** Cada item es un enlace directo a su página, sin el
+ * «+» ni los subenlaces que dibuja el PDF: se retiraron por decisión del
+ * usuario. En una subpágina, el item de su sección queda marcado con
+ * `aria-current="location"` (`navCurrent`, en `data/nav.ts`).
  */
-import { mainNav, homeLink, brand, joinHref, joinLabel, chrome } from '../../data/nav';
+import { mainNav, homeLink, brand, joinHref, joinLabel, chrome, navCurrent } from '../../data/nav';
 import { media } from '../../data/media';
 import Logo from '../ui/Logo.astro';
-import NavDropdown from './NavDropdown.astro';
 import MobileMenu from './MobileMenu.astro';
 
 const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/';
@@ -121,32 +118,29 @@ const isHome = currentPath === homeLink.href;
         {/* Items del menú, centrados en el hueco (desktop). */}
         <ul class="hidden flex-1 items-stretch justify-center gap-10 canvas:flex">
             {mainNav.map((item) => {
-                if (true) {
-                    const isCurrent = currentPath === item.href;
-                    return (
-                        <li class="flex items-stretch">
-                            <a
-                                href={item.href}
-                                aria-current={isCurrent ? 'page' : undefined}
-                                class:list={[
-                                    'relative flex items-center font-ui text-[0.975rem] font-bold transition-colors',
-                                    // El item de la página actual ya es navy, así que
-                                    // `hover:text-navy` era un no-op y el enlace se
-                                    // quedaba sin respuesta al ratón (F6). Aclara a
-                                    // navy-700, igual que el bloque INICIO.
-                                    isCurrent
-                                        ? 'text-navy hover:text-navy-700 focus-visible:text-navy-700'
-                                        : 'hover:text-navy focus-visible:text-navy',
-                                    isCurrent &&
-                                        'after:absolute after:inset-x-0 after:bottom-[0.8125rem] after:h-[3px] after:bg-navy-500 after:content-[""]',
-                                ]}
-                            >
-                                {item.label}
-                            </a>
-                        </li>
-                    );
-                }
-                return <NavDropdown item={item} currentPath={currentPath} />;
+                const current = navCurrent(currentPath, item.href);
+                return (
+                    <li class="flex items-stretch">
+                        <a
+                            href={item.href}
+                            aria-current={current}
+                            class:list={[
+                                'relative flex items-center font-ui text-[0.975rem] font-bold transition-colors',
+                                // El item de la página actual ya es navy, así que
+                                // `hover:text-navy` era un no-op y el enlace se
+                                // quedaba sin respuesta al ratón (F6). Aclara a
+                                // navy-700, igual que el bloque INICIO.
+                                current
+                                    ? 'text-navy hover:text-navy-700 focus-visible:text-navy-700'
+                                    : 'hover:text-navy focus-visible:text-navy',
+                                current &&
+                                    'after:absolute after:inset-x-0 after:bottom-[0.8125rem] after:h-[3px] after:bg-navy-500 after:content-[""]',
+                            ]}
+                        >
+                            {item.label}
+                        </a>
+                    </li>
+                );
             })}
         </ul>
 

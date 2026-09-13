@@ -30,7 +30,7 @@ export const hero = {
     countdownBoxes: ['DÍAS', 'HORAS', 'MIN', 'SEG'],
     /** CTA del SponsorTeaser (en home). */
     sponsorTeaserCta: 'Ver paquetes',
-    sponsorTeaserCtaHref: '/patrocinios/index.html',
+    sponsorTeaserCtaHref: '/patrocinios',
 } as const;
 
 // ============================================================
@@ -101,6 +101,18 @@ export const participations = {
                 value: `${venue.addressLocality}, Louisiana`,
             },
         ] as const,
+    },
+    /**
+     * Botón de la tarjeta hacia la página del evento. Sólo lo muestra
+     * `/participaciones`: sin él, esa página no tiene ningún enlace dentro
+     * del sitio. `srSuffix` completa el nombre accesible («Ver más sobre
+     * The 2027…») sin alargar el texto visible, que tiene que caber junto
+     * al chip «PRÓXIMO EVENTO».
+     */
+    eventLink: {
+        label: 'Ver más',
+        srSuffix: `sobre ${eventName}`,
+        href: '/participaciones/southwest-2027',
     },
 } as const;
 

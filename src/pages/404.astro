@@ -21,22 +21,10 @@ import { mainNav } from '../data/nav';
 
 const { eyebrow, title, body, ctaLabel, usefulHeading } = notFound;
 
-/** Solo las hojas del nav (más "Inicio") son útiles en un 404. */
+/** Las entradas del nav (más "Inicio") son los enlaces útiles en un 404. */
 const usefulLinks = [
     { label: 'Inicio', href: '/' },
-    ...mainNav.flatMap((item) => {
-        if (!item.hasSubmenu || !item.children?.length) {
-            return [{ label: item.label, href: item.href }];
-        }
-        // Para entradas con submenú, preferimos el enlace del padre
-        // y añadimos el hijo si apunta a una subruta (no a un ancla).
-        return [
-            { label: item.label, href: item.href },
-            ...item.children
-                .filter((child) => child.href.startsWith('/'))
-                .map((child) => ({ label: child.label, href: child.href })),
-        ];
-    }),
+    ...mainNav.map((item) => ({ label: item.label, href: item.href })),
 ] as const;
 ---
 

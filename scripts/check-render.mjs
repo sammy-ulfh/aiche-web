@@ -260,7 +260,10 @@ for (const cfg of MATRIX) {
         });
         page.on('pageerror', (e) => consoleErrors.push(`excepción: ${e.message}`));
 
-        await page.goto(base + route, { waitUntil: 'networkidle' });
+        // `load` y no `networkidle`: el video de `/participaciones/` está en
+        // el primer viewport y descarga en streaming, así que la red nunca
+        // queda ociosa y `goto` agotaba el timeout.
+        await page.goto(base + route, { waitUntil: 'load' });
         // Margen para que el reveal (y su hombre muerto de 2 s) se resuelva.
         await page.waitForTimeout(2400);
 

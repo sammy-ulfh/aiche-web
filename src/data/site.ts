@@ -9,8 +9,8 @@
  * `data/event.ts`, que es su fuente única (ADENDA §A4).
  */
 
-// Dominio definitivo (RULES §19.7). Provisional hasta que el usuario lo
-// compre — pendiente P-005.
+// Dominio de producción: el subdominio que Vercel asigna al proyecto
+// `aiche-web`. Si se compra un dominio propio, se cambia aquí.
 //
 // **Esta línea es el único sitio donde vive el dominio.** Cambiarla
 // propaga a canonical, Open Graph, Twitter, el JSON-LD de Organization y
@@ -18,7 +18,7 @@
 // y comprobando que no queda una sola aparición del dominio anterior en
 // `dist/` (D-183). Hasta F8 no era cierto: `astro.config.mjs` y
 // `public/robots.txt` lo tenían escrito a mano por su cuenta.
-export const siteUrl = 'https://aichegdl.example.com';
+export const siteUrl = 'https://aiche-web.vercel.app';
 
 /**
  * Preview pública: bloquea a los buscadores (D-185).
@@ -39,7 +39,7 @@ export const siteUrl = 'https://aichegdl.example.com';
  * ese mismo `noindex` es justo lo que no se puede olvidar encendido el
  * día del lanzamiento.
  */
-export const previewNoIndex = true;
+export const previewNoIndex = false;
 
 // Identidad
 export const siteName = 'AIChE GDL';

@@ -178,8 +178,7 @@
         footer,
         nav,
         [data-skip-link],
-        .mobile-menu,
-        .nav-dropdown {
+        .mobile-menu {
             display: none !important;
         }
 
@@ -524,26 +523,6 @@
         }
     }
 
-    /* ---------- Submenú de escritorio (F5b) ----------------------- *
-     * Los tres items con subpáginas son enlaces directos: pulsarlos
-     * lleva a su página y por eso ya no llevan el «+» del PDF. El panel
-     * de hijos se abre solo, sin JavaScript, cuando el ratón entra en el
-     * item o cuando el foco de teclado cae dentro de él. `:focus-within`
-     * cubre también al propio enlace padre, así que al tabular hasta él
-     * el panel aparece y sus hijos entran en el orden natural de
-     * tabulación (RULES §7.2).
-     *
-     * `display: none` saca el panel del árbol de accesibilidad y del orden de
-     * tabulación mientras está cerrado, así que no hace falta nada más. */
-    .nav-submenu {
-        display: none;
-    }
-
-    [data-dropdown]:hover > .nav-submenu,
-    [data-dropdown]:focus-within > .nav-submenu {
-        display: block;
-    }
-
     /* ---------- Panel del menú móvil (RULES §7.3) ----------------- *
      * El panel se controla con `data-open`, que es lo que conmuta
      * `scripts/nav.ts`. Antes el marcado llevaba además la clase
@@ -784,9 +763,24 @@
              * `padding-block` aquí la despegaría de los bordes. */
             padding-block: 0;
         }
+        /* Aire de la columna: 3.8125 u arriba y 2.125 abajo, salvo cuando
+         * no cabe. Por debajo de ~700px de alto `--screen-fs` toca su suelo
+         * (0.62rem) y la columna pedía 679px a 1280×720 con 640 útiles. El
+         * contenido sin aire mide como mucho 62.5 u (medido de 1280 a
+         * 1920), así que el aire se queda con lo que sobra,
+         * `--screen-h − 62.5 u`, repartido en la proporción del diseño y
+         * sin pasar nunca de él. */
         .about-copy {
-            padding-block: calc(var(--screen-fs, 1rem) * 3.8125)
-                calc(var(--screen-fs, 1rem) * 2.125);
+            padding-block: clamp(
+                    0px,
+                    calc((var(--screen-h) - 62.5 * var(--screen-fs)) * 3.8125 / 5.9375),
+                    calc(var(--screen-fs) * 3.8125)
+                )
+                clamp(
+                    0px,
+                    calc((var(--screen-h) - 62.5 * var(--screen-fs)) * 2.125 / 5.9375),
+                    calc(var(--screen-fs) * 2.125)
+                );
         }
     }
     .about-copy {
@@ -899,6 +893,14 @@
      * vale 15.6px porque se midió en la p.1; aquí manda la p.7. */
     .event-card-eyebrow {
         font-size: calc(var(--screen-fs, 1rem) * 1.083);
+    }
+    /* Botón «Ver más» de la tarjeta, en la fila del chip. Tiene que caber
+     * en las 11.2 u que quedan a su derecha (medido a 1920, 1440 y 1280):
+     * texto a la escala de `.t-eyebrow` y tracking de 0.2em en vez de
+     * 0.30em. */
+    .event-card-link {
+        font-size: calc(var(--screen-fs, 1rem) * 0.975);
+        letter-spacing: 0.2em;
     }
     /* 26.5 unidades (424px). La línea más larga, «The 2027 AIChE
      * Southwest», mide 398.5px en Segoe UI Bold y ~416 en Arial; con 424
@@ -1272,6 +1274,7 @@
         .competition-name { font-size: 1rem; }
         .competition-blurb { font-size: 0.9375rem; }
         .event-card-eyebrow { font-size: 0.75rem; }
+        .event-card-link { font-size: 0.75rem; }
     }
 
     /* En móvil el lienzo apaisado no aplica (ver §A3 arriba): los

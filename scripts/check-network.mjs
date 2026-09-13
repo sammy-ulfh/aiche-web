@@ -121,7 +121,14 @@ for (const vp of VIEWPORTS) {
         });
 
         console.log(`\n${route}`);
-        await page.goto(BASE + route, { waitUntil: 'networkidle' });
+        // `load` y no `networkidle`: el video de `/participaciones/` está en
+        // el primer viewport y descarga en streaming, así que la red nunca
+        // queda ociosa y `goto` agotaba el timeout. La espera fija conserva
+        // lo que `networkidle` daba de paso: tiempo para que cualquier
+        // petición prematura (póster o video bajo el pliegue) aparezca antes
+        // de medir.
+        await page.goto(BASE + route, { waitUntil: 'load' });
+        await page.waitForTimeout(1500);
 
         // --- 1. terceros ------------------------------------------------
         const foreign = requests.filter((u) => !u.startsWith(BASE) && !u.startsWith('data:'));

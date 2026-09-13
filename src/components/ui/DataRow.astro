@@ -14,6 +14,13 @@
  *
  * **Tenía una variante `navy`** para la tarjeta del home, que desapareció
  * con `NextEvent` (D-153).
+ *
+ * En el lienzo el padding lateral baja a 1.25 u. El par va centrado, así
+ * que a 1920 no se mueve un píxel; pero la etiqueta no baja de 11px (por
+ * legibilidad) y por debajo de ~1440 deja de encoger con la escala: a
+ * 1280 «UBICACIÓN» + «Lake Charles, Louisiana» pedían 244px y el padding
+ * del diseño sólo dejaba 241. La etiqueta además no puede partirse: la
+ * regla global `overflow-wrap: anywhere` la cortaba en «UBICACIÓ / N».
  */
 interface Props {
     label: string;
@@ -26,9 +33,9 @@ const { label, value, valueHtml } = Astro.props;
 ---
 
 <div
-    class="event-data-row flex flex-col items-center justify-center gap-1 bg-white px-[1.9375em] text-center sm:flex-row sm:gap-4"
+    class="event-data-row flex flex-col items-center justify-center gap-1 bg-white px-[1.9375em] text-center sm:flex-row sm:gap-4 canvas:px-[1.25em]"
 >
-    <dt class="eyebrow t-label text-navy-700">{label}</dt>
+    <dt class="eyebrow t-label shrink-0 whitespace-nowrap text-navy-700">{label}</dt>
     <dd class="event-data-value text-chrome-ink">
         {valueHtml ? <Fragment set:html={valueHtml} /> : value}
     </dd>

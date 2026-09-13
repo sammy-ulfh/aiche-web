@@ -19,6 +19,12 @@
  * lista de competencias ya salían dentro del bloque de Participaciones,
  * en la pantalla siguiente— y con ella la variante, que era código
  * muerto (§A4: un concepto, un componente).
+ *
+ * `link` añade un botón al detalle del evento en la fila del chip. No
+ * cabe en otro sitio: en el lienzo la cabecera tiene alto fijo y le
+ * sobran ~5px, pero a la derecha del chip quedan 11.2 u libres, y
+ * `.event-card-link` está dimensionado para caber ahí en todo el rango
+ * del lienzo. Apilado, si no cabe, baja de línea (`flex-wrap`).
  */
 import Eyebrow from './Eyebrow.astro';
 import DataRow from './DataRow.astro';
@@ -36,12 +42,15 @@ interface Props {
      * página, `h3` cuando la diapositiva ya es un `h2` (el home).
      */
     headingLevel?: 'h2' | 'h3';
+    /** Botón opcional al detalle del evento, a la derecha del chip. */
+    link?: { label: string; href: string; srSuffix?: string };
     class?: string;
 }
 
 const {
     event: nextEvent,
     headingLevel = 'h2',
+    link,
     class: className = '',
 } = Astro.props;
 const HeadingTag = headingLevel;
@@ -59,10 +68,22 @@ const HeadingTag = headingLevel;
       * hay alto fijo, así que ese aire lo pone un padding inferior: sin
       * él el título de tres líneas quedaba pegado a la banda. */}
     <div class="flex flex-col items-start px-[1.9375em] pt-[1.9375em] pb-[1.25em] canvas:h-[12.75em] canvas:pb-0">
-        <Eyebrow
-            tone="navy"
-            class="event-card-eyebrow border-[0.125em] border-navy-200 px-[1.06em] py-[0.4em] leading-none text-white"
-        >{nextEvent.eyebrow}</Eyebrow>
+        <div class="flex w-full flex-wrap items-stretch justify-between gap-[0.5em]">
+            <Eyebrow
+                tone="navy"
+                class="event-card-eyebrow border-[0.125em] border-navy-200 px-[1.06em] py-[0.4em] leading-none text-white"
+            >{nextEvent.eyebrow}</Eyebrow>
+            {link && (
+                <a
+                    href={link.href}
+                    class="event-card-link eyebrow inline-flex items-center gap-[0.45em] border-[0.125em] border-white bg-white px-[0.8em] py-[0.4em] leading-none text-navy transition-colors hover:border-cream hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                    {link.label}
+                    {link.srSuffix && <span class="sr-only"> {link.srSuffix}</span>}
+                    <span aria-hidden="true">→</span>
+                </a>
+            )}
+        </div>
         <HeadingTag class="event-card-title mt-[0.5em] text-white">{nextEvent.title}</HeadingTag>
     </div>
 

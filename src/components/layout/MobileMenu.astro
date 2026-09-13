@@ -5,17 +5,14 @@
  * RULES §7.3: hamburguesa, panel completo, focus trap (lo gestiona el
  * JS), bloqueo de scroll del body (lo gestiona el JS).
  *
- * **F5b: sin acordeones.** Los items con subpáginas tienen página
- * propia, así que el padre es un enlace normal —sin «+»— y sus hijos
- * quedan listados debajo, siempre visibles. Son tres items con uno a
- * tres hijos: la lista completa cabe de sobra y desaparece el estado
- * plegado/desplegado (y su JS).
+ * **Sin submenús.** Cada item es un enlace directo a su página; en una
+ * subpágina queda marcado el item de su sección (`navCurrent`).
  *
  * El JS vive en `src/scripts/nav.ts`. Aquí solo se renderiza la
  * estructura y los estados iniciales.
  */
 import type { NavItem } from '../../data/nav';
-import { joinHref, joinLabel, chrome } from '../../data/nav';
+import { joinHref, joinLabel, chrome, navCurrent } from '../../data/nav';
 
 interface Props {
     items: readonly NavItem[];
@@ -87,20 +84,23 @@ const { items, currentPath } = Astro.props;
 
     <nav class="flex-1 overflow-y-auto px-6 py-6" aria-label={chrome.mobileNavAria}>
         <ul class="space-y-2">
-            {items.map((item) => (
-                <li>
-                    <a
-                        href={item.href}
-                        class:list={[
-                            'block py-3 text-lg font-semibold transition-colors',
-                            currentPath === item.href && 'text-cream',
-                        ]}
-                        aria-current={currentPath === item.href ? 'page' : undefined}
-                    >
-                        {item.label}
-                    </a>
-                </li>
-            ))}
+            {items.map((item) => {
+                const current = navCurrent(currentPath, item.href);
+                return (
+                    <li>
+                        <a
+                            href={item.href}
+                            class:list={[
+                                'block py-3 text-lg font-semibold transition-colors',
+                                current && 'text-cream',
+                            ]}
+                            aria-current={current}
+                        >
+                            {item.label}
+                        </a>
+                    </li>
+                );
+            })}
         </ul>
 
         <a

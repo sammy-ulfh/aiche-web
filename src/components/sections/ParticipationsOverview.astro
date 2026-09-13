@@ -50,9 +50,14 @@ import { media } from '../../data/media';
 interface Props {
     /** `h1` en su propia página; `h2` cuando va dentro del home. */
     headingLevel?: 'h1' | 'h2';
+    /**
+     * Botón «Ver más» de la tarjeta hacia la página del evento. Lo activa
+     * sólo `/participaciones`; el home no lo lleva.
+     */
+    eventLink?: boolean;
 }
 
-const { headingLevel = 'h1' } = Astro.props as Props;
+const { headingLevel = 'h1', eventLink = false } = Astro.props as Props;
 const HeadingTag = headingLevel;
 const isPageTitle = headingLevel === 'h1';
 // Un `<section>` sin nombre accesible no se anuncia como región: el
@@ -77,8 +82,14 @@ const panelHeadingId = 'competitions-heading';
 >
     <GridBackdrop center="centered" />
 
+    {/* Aire vertical: 2 u arriba y abajo, como en el diseño, salvo cuando
+      * no cabe. Por debajo de ~740px de alto `--screen-fs` toca su suelo
+      * (0.62rem) y las 66.5 u pedían 660px a 1280×720 con 640 útiles; el
+      * aire se encoge lo justo, `(--screen-h − 62.5 u) / 2`, y nunca pasa
+      * de 2 u, así que a 1920×1080 sigue siendo exactamente 30px. Va como
+      * utilidad y no en `global.css` para que gane a `py-12`. */}
     <div
-        class="participations-layout relative flex flex-1 flex-col gap-8 px-6 py-12 canvas:grid canvas:grid-cols-[32.1875em_1fr] canvas:grid-rows-1 canvas:gap-[2.4375em] canvas:py-[2em] canvas:pr-0 canvas:pl-[2.1875em]"
+        class="participations-layout relative flex flex-1 flex-col gap-8 px-6 py-12 canvas:grid canvas:grid-cols-[32.1875em_1fr] canvas:grid-rows-1 canvas:gap-[2.4375em] canvas:py-[clamp(0px,calc((var(--screen-h)_-_62.5em)/2),2em)] canvas:pr-0 canvas:pl-[2.1875em]"
     >
         {/* Columna derecha del diseño: título, bajada y media. */}
         <div class="flex flex-col canvas:col-start-2 canvas:row-start-1">
@@ -120,6 +131,7 @@ const panelHeadingId = 'competitions-heading';
                 <EventCard
                     event={participations.nextEvent}
                     headingLevel={subHeading}
+                    link={eventLink ? participations.eventLink : undefined}
                 />
             </div>
 
