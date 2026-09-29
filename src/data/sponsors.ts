@@ -50,7 +50,7 @@ export const sponsorTiers: readonly SponsorTier[] = [
     {
         id: 'tier-2',
         label: 'PAQUETE 2',
-        price: '5,000',
+        price: '6,000',
         featured: false,
         benefits: [
             'Logo/banner en uniformes del equipo.',
@@ -62,7 +62,7 @@ export const sponsorTiers: readonly SponsorTier[] = [
     {
         id: 'tier-3',
         label: 'PAQUETE 3',
-        price: '2,500',
+        price: '3,000',
         featured: false,
         benefits: [
             'Post de agradecimiento en redes sociales oficiales del equipo.',
